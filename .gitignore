@@ -50,3 +50,16 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Cmake Stuffs
+CMakeCache.txt
+CMakeFiles/*
+Makefile
+cmake_install.cmake
+.vscode/*
+.idea
+Pandora
+cgame
+cmake-build-debug/
+build
+cgame.cbp
