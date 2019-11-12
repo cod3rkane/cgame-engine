@@ -3,4 +3,4 @@ project(cgame_engine C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(cgame_engine main.c)
+add_executable(cgame_engine src/main.c)
