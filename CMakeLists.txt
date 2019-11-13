@@ -7,7 +7,14 @@ find_package(PkgConfig REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
 
-add_executable(cgame_engine src/main.c src/external/glad.c src/external/glad.h src/external/khrplatform.h)
+add_executable(
+  cgame_engine
+  src/main.c
+  src/external/glad.c
+  src/external/glad.h
+  src/external/khrplatform.h
+  src/cod3rGL.h
+)
 
 include_directories(${OPENGL_INCLUDE_DIR} ${OPENGL_INCLUDE_DIRS})
 target_include_directories(cgame_engine PUBLIC ${OPENGL_INCLUDE_DIR})
