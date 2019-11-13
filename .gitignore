@@ -63,3 +63,4 @@ cgame
 cmake-build-debug/
 build
 cgame.cbp
+cgame_engine
