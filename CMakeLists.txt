@@ -14,8 +14,13 @@ add_executable(
   src/external/glad.h
   src/external/khrplatform.h
   src/cod3rGL.h
+  src/utils.c
+  src/utils.h
 )
 
+include_directories(src/external/glm)
+
 include_directories(${OPENGL_INCLUDE_DIR} ${OPENGL_INCLUDE_DIRS})
+
 target_include_directories(cgame_engine PUBLIC ${OPENGL_INCLUDE_DIR})
 target_link_libraries(cgame_engine PUBLIC glfw ${OPENGL_LIBRARIES} ${OPENGL_gl_LIBRARY} ${CMAKE_DL_LIBS})
