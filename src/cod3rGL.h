@@ -25,11 +25,11 @@ typedef struct Mesh {
     int vertexCount;        // number of vertices stored in arrays
     int triangleCount;      // number of triangles stored (indexed or not)
     float *vertices;        // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
-    float *texcoords;       // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
-    float *texcoords2;      // vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
-    float *normals;         // vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
-    float *tangents;        // vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
-    unsigned char *colors;  // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+    float *texcoords;       // vertex texture coordinates (UV - 2 components per vertex)
+    float *texcoords2;      // vertex second texture coordinates (useful for lightmaps)
+    float *normals;         // vertex normals (XYZ - 3 components per vertex)
+    float *tangents;        // vertex tangents (XYZW - 4 components per vertex)
+    unsigned char *colors;  // vertex colors (RGBA - 4 components per vertex)
     unsigned short *indices;// vertex indices (in case vertex data comes indexed)
 
     // Animation vertex data
@@ -40,7 +40,7 @@ typedef struct Mesh {
 
     // OpenGL identifiers
     unsigned int vaoId;     // OpenGL Vertex Array Object id
-    unsigned int *vboId;    // OpenGL Vertex Buffer Objects id (7 types of vertex data)
+    unsigned int *vboId;    // OpenGL Vertex Buffer Objects id
 } Mesh;
 
 // Functions
