@@ -10,23 +10,29 @@
 #define DEFAULT_ATTRIB_COLOR_NAME "vertexColor"
 #define LOC_VERTEX_POSITION 0
 #define LOC_VERTEX_COLOR 1
+#define MAX_SHADER_LOCATIONS 32      // Maximum number of predefined locations stored in shader struct
+
+// Global Variables
+
+static int currentBuffer = 0;
+unsigned int currentVaoId = 0;
 
 // Structs
 typedef struct Shader {
-    unsigned int id; // Shader Program ID
-    int *locs;      // Shader locations array
+    unsigned int id;    // Shader Program ID
+    int *locs;          // Shader locations array
 } Shader;
 
 typedef struct Mesh {
-    int vertexCount;        // number of vertices stored in arrays
-    int triangleCount;      // number of triangles stored (indexed or not)
-    float *vertices;        // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
-    float *texcoords;       // vertex texture coordinates (UV - 2 components per vertex)
-    float *texcoords2;      // vertex second texture coordinates (useful for lightmaps)
-    float *normals;         // vertex normals (XYZ - 3 components per vertex)
-    float *tangents;        // vertex tangents (XYZW - 4 components per vertex)
-    unsigned char *colors;  // vertex colors (RGBA - 4 components per vertex)
-    unsigned short *indices;// vertex indices (in case vertex data comes indexed)
+    int vertexCount;            // number of vertices stored in arrays
+    int triangleCount;          // number of triangles stored (indexed or not)
+    float *vertices;            // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+    float *texcoords;           // vertex texture coordinates (UV - 2 components per vertex)
+    float *texcoords2;          // vertex second texture coordinates (useful for lightmaps)
+    float *normals;             // vertex normals (XYZ - 3 components per vertex)
+    float *tangents;            // vertex tangents (XYZW - 4 components per vertex)
+    float *colors;              // vertex colors (RGBA - 4 components per vertex)
+    unsigned int *indices;    // vertex indices (in case vertex data comes indexed)
 
     // Animation vertex data
     float *animVertices;    // Animated vertex positions (after bones transformations)
@@ -38,6 +44,24 @@ typedef struct Mesh {
     unsigned int vaoId;     // OpenGL Vertex Array Object id
     unsigned int *vboId;    // OpenGL Vertex Buffer Objects id
 } Mesh;
+
+typedef struct Vector2 {
+    float x;
+    float y;
+} Vector2;
+
+typedef struct Vector3 {
+    float x;
+    float y;
+    float z;
+} Vector3;
+
+typedef struct Vector4 {
+    float x;
+    float y;
+    float z;
+    float w;
+} Vector4;
 
 // Functions
 Shader LoadShader(const char *vsFileName, const char *fsFileName);
@@ -73,7 +97,7 @@ char *LoadText(const char *fileName) {
     char *text = NULL;
 
     if (fileName != NULL) {
-        textFile = fopen(fileName, "rt");
+        textFile = fopen(fileName, "r");
 
         if (textFile != NULL) {
             fseek(textFile, 0, SEEK_END);
@@ -81,6 +105,7 @@ char *LoadText(const char *fileName) {
             fseek(textFile, 0, SEEK_SET);
 
             if (size > 0) {
+                text = (char *)malloc(size * sizeof(char));
                 int count = fread(text, sizeof(char), size, textFile);
                 text[count] = '\0';
             }
@@ -96,6 +121,7 @@ char *LoadText(const char *fileName) {
 
 Shader LoadShaderCode(const char *vsCode, const char *fsCode) {
     Shader shader = { 0 };
+    shader.locs = (int *)malloc(MAX_SHADER_LOCATIONS * sizeof(int));
 
     unsigned int vertexShaderId = 0;
     unsigned int fragmentShaderId = 0;
@@ -104,9 +130,6 @@ Shader LoadShaderCode(const char *vsCode, const char *fsCode) {
     if (fsCode != NULL) fragmentShaderId = CompileShader(fsCode, GL_FRAGMENT_SHADER);
 
     shader.id = LoadShaderProgram(vertexShaderId, fragmentShaderId);
-
-    glDeleteShader(vertexShaderId);
-    glDeleteShader(fragmentShaderId);
 
     if (shader.id == 0) TraceLog(LOG_WARNING, "Custom shader could not be\n");
 
@@ -149,8 +172,10 @@ static unsigned int CompileShader(const char *shaderStr, int type) {
 
         char log[maxLength];
         glGetShaderInfoLog(shader, maxLength, &length, log);
-        TraceLog(LOG_INFO, "[Shader ID: %i] Shader compiled successfully\n", shader);
+        TraceLog(LOG_INFO, "%s", log);
     }
+
+    TraceLog(LOG_INFO, "[Shader ID: %i] Shader compiled successfully\n", shader);
 
     return shader;
 }
@@ -171,7 +196,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
     glGetProgramiv(program, GL_LINK_STATUS, &success);
 
     if (success == GL_FALSE) {
-        TraceLog(LOG_WARNING, "[Shader ID: %i] Failed to link shader program...\n", program);
+        TraceLog(LOG_WARNING, "[Program ID: %i] Failed to link shader program...\n", program);
         int maxLength = 0;
         int length;
 
@@ -182,7 +207,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 
         TraceLog(LOG_INFO, "%s", log);
     } else {
-        TraceLog(LOG_INFO, "[Shader ID: %i] Shader program loaded successfully\n", program);
+        TraceLog(LOG_INFO, "[Program ID: %i] Shader program loaded successfully\n", program);
     }
 
     return program;
@@ -191,7 +216,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 void UnloadShader(Shader shader) {
     if (shader.id > 0) {
         glDeleteShader(shader.id);
-        TraceLog(LOG_INFO, "[Shader ID: %i] Unloaded shader program data\n", shader.id);
+        TraceLog(LOG_INFO, "[Program ID: %i] Unloaded shader program data\n", shader.id);
     }
 }
 
