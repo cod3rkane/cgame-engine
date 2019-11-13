@@ -3,12 +3,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "external/glad.h"
-
-#define LOG_WARNING "WARNING: "
-#define LOG_DEBUG "DEBUG: "
-#define LOG_INFO "INFO: "
+#include "utils.h"
 
 #define DEFAULT_ATTRIB_POSITION_NAME "vertexPosition"
 #define DEFAULT_ATTRIB_COLOR_NAME "vertexColor"
@@ -91,7 +87,7 @@ char *LoadText(const char *fileName) {
 
             fclose(textFile);
         } else {
-            printf(LOG_WARNING, "[%s] Text file could not be opened\n", fileName);
+            TraceLog(LOG_WARNING, "[%s] Text file could not be opened\n", fileName);
         }
     }
 
@@ -112,7 +108,7 @@ Shader LoadShaderCode(const char *vsCode, const char *fsCode) {
     glDeleteShader(vertexShaderId);
     glDeleteShader(fragmentShaderId);
 
-    if (shader.id == 0) printf(LOG_WARNING, "Custom shader could not be\n");
+    if (shader.id == 0) TraceLog(LOG_WARNING, "Custom shader could not be\n");
 
     if (shader.id > 0) SetShaderDefaultLocations(&shader);
 
@@ -130,7 +126,7 @@ Shader LoadShaderCode(const char *vsCode, const char *fsCode) {
 
         // get the location of the named uniform
         unsigned int location = glGetUniformLocation(shader.id, name);
-        printf(LOG_DEBUG, "[Shader ID: %i] Active uniform [%s] set at locatiom: %i\n", shader.id, name, location);
+        TraceLog(LOG_DEBUG, "[Shader ID: %i] Active uniform [%s] set at locatiom: %i\n", shader.id, name, location);
     }
 
     return shader;
@@ -145,7 +141,7 @@ static unsigned int CompileShader(const char *shaderStr, int type) {
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
     if (success != GL_TRUE) {
-        printf(LOG_WARNING, "[Shader ID: %i] Failed to compile shader...\n", shader);
+        TraceLog(LOG_WARNING, "[Shader ID: %i] Failed to compile shader...\n", shader);
         int maxLength = 0;
         int length;
 
@@ -153,7 +149,7 @@ static unsigned int CompileShader(const char *shaderStr, int type) {
 
         char log[maxLength];
         glGetShaderInfoLog(shader, maxLength, &length, log);
-        printf(LOG_INFO, "[Shader ID: %i] Shader compiled successfully\n", shader);
+        TraceLog(LOG_INFO, "[Shader ID: %i] Shader compiled successfully\n", shader);
     }
 
     return shader;
@@ -175,7 +171,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
     glGetProgramiv(program, GL_LINK_STATUS, &success);
 
     if (success == GL_FALSE) {
-        printf(LOG_WARNING, "[Shader ID: %i] Failed to link shader program...\n", program);
+        TraceLog(LOG_WARNING, "[Shader ID: %i] Failed to link shader program...\n", program);
         int maxLength = 0;
         int length;
 
@@ -184,9 +180,9 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 
         glGetProgramInfoLog(program, maxLength, &length, log);
 
-        printf(LOG_INFO, "%s", log);
+        TraceLog(LOG_INFO, "%s", log);
     } else {
-        printf(LOG_INFO, "[Shader ID: %i] Shader program loaded successfully\n", program);
+        TraceLog(LOG_INFO, "[Shader ID: %i] Shader program loaded successfully\n", program);
     }
 
     return program;
@@ -195,7 +191,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 void UnloadShader(Shader shader) {
     if (shader.id > 0) {
         glDeleteShader(shader.id);
-        printf(LOG_INFO, "[Shader ID: %i] Unloaded shader program data\n", shader.id);
+        TraceLog(LOG_INFO, "[Shader ID: %i] Unloaded shader program data\n", shader.id);
     }
 }
 
