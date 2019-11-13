@@ -1,15 +1,9 @@
 #version 410
 
-in vec3 vertexPosition;
-in vec4 vertexColor;
-
-uniform mat4 mvp;             // VS: ModelViewProjection matrix
-uniform mat4 projection;      // VS: Projection matrix
-uniform mat4 view;            // VS: View matrix
+layout (location = 0) in vec3 vertexPosition;
 
 out vec4 color;
 
 void main() {
-  gl_Position = mvp * vec4(vertexPosition, 1.0);
-  color = vertexColor;
+  gl_Position = vec4(vertexPosition, 1.0);
 }
