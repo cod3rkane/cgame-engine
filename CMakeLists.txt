@@ -13,12 +13,12 @@ add_executable(
   src/external/glad.c
   src/external/glad.h
   src/external/khrplatform.h
+  src/external/timer.c
+  src/external/timer.h
   src/cod3rGL.h
   src/utils.c
   src/utils.h
 )
-
-include_directories(src/external/glm)
 
 include_directories(${OPENGL_INCLUDE_DIR} ${OPENGL_INCLUDE_DIRS})
 
