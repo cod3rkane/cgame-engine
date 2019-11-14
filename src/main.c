@@ -2,6 +2,7 @@
 #include "external/glad.h"
 #include <GLFW/glfw3.h>
 #include "cod3rGL.h"
+#include "external/timer.h"
 
 int main() {
     glfwInit();
@@ -84,10 +85,15 @@ int main() {
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    glBindVertexArray(0); 
+    glBindVertexArray(0);
+
+    timer_t timer;
+    timer_start(&timer);
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+
+        printf("%ld\n", timer_delta_s(&timer));
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -106,6 +112,8 @@ int main() {
 
         glfwSwapBuffers(window);
     }
+
+    timer_pause(&timer);
 
     glfwTerminate();
     return 0;
