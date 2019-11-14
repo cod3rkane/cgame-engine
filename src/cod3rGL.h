@@ -72,6 +72,8 @@ void UnloadShader(Shader shader);
 static void SetShaderDefaultLocations(Shader *shader);
 char *LoadText(const char *fileName);
 
+Mesh createRect(Vector4 *color);
+
 // Functions Declarations
 
 Shader LoadShader(const char *vsFileName, const char *fsFileName) {
@@ -223,6 +225,80 @@ void UnloadShader(Shader shader) {
 static void SetShaderDefaultLocations(Shader *shader) {
     shader->locs[LOC_VERTEX_POSITION] = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_POSITION_NAME);
     shader->locs[LOC_VERTEX_COLOR] = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_COLOR_NAME);
+}
+
+Mesh createRect(Vector4 *color) {
+    Mesh mesh;
+    mesh.vertices = (float *)malloc( 12 * sizeof(float));
+    mesh.colors = (float *)malloc( 16 * sizeof(float));
+    mesh.indices = (unsigned int *)malloc(6 * sizeof(unsigned int));
+    mesh.vboId = (unsigned int *)malloc(3 * sizeof(unsigned int *));
+
+    mesh.vboId[0] = 0; // positions
+    mesh.vboId[1] = 0; // colors
+    mesh.vboId[2] = 0; // indices
+
+    float vertices[] = {
+         0.5f,  0.5f, 0.0f,  // top right
+         0.5f, -0.5f, 0.0f,  // bottom right
+        -0.5f, -0.5f, 0.0f,  // bottom left
+        -0.5f,  0.5f, 0.0f   // top left 
+    };
+
+    float *colors = (float *)malloc( 16 * sizeof(float));
+
+    if (color != NULL) {
+        for (int i = 0; i < 4; i++) {
+            colors[i * 4] = color->x;
+            colors[i * 4 + 1] = color->y;
+            colors[i * 4 + 2] = color->z;
+            colors[i * 4 + 3] = color->w;
+        }
+    } else {
+        float whiteColor[] = {
+            1.0f, 1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 1.0f
+        };
+
+        colors = whiteColor;
+    }
+
+    unsigned int indices[] = {
+        0, 1, 3,  // first Triangle
+        1, 2, 3   // second Triangle
+    };
+
+    mesh.vertices = vertices;
+    mesh.indices = indices;
+    mesh.colors = colors;
+
+    glGenBuffers(1, &mesh.vboId[0]);
+    glGenBuffers(1, &mesh.vboId[1]);
+    glGenBuffers(1, &mesh.vboId[2]);
+
+    glBindVertexArray(currentVaoId); // current global VAO
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
+    glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float), mesh.vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(LOC_VERTEX_POSITION, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+    glEnableVertexAttribArray(LOC_VERTEX_POSITION);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
+    glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), mesh.colors, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(LOC_VERTEX_COLOR, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+    glEnableVertexAttribArray(LOC_VERTEX_COLOR);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.vboId[2]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), mesh.indices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    return mesh;
 }
 
 #endif // COD3R_GL_H
