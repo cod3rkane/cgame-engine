@@ -46,8 +46,8 @@ int main() {
     };
 
     float colors[] = {
-        0.368627f, 1.0f, 0.737255f, 1.0f,
-        0.368627f, 1.0f, 0.737255f, 1.0f,
+        0.368627f, 1.0f, 0.737255f, 0.0f,
+        0.368627f, 1.0f, 0.737255f, 0.0f,
         0.368627f, 1.0f, 0.737255f, 1.0f,
         0.368627f, 1.0f, 0.737255f, 1.0f
     };
@@ -95,7 +95,12 @@ int main() {
         glUseProgram(defaultShader.id);
         glBindVertexArray(currentVaoId);
 
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        glDisable(GL_BLEND);
 
         glBindVertexArray(0);
 
