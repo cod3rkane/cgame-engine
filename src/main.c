@@ -93,8 +93,6 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        printf("%ld\n", timer_delta_s(&timer));
-
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -113,6 +111,8 @@ int main() {
         glfwSwapBuffers(window);
     }
 
+    printf("Running time in seconds: %ld\n", timer_delta_s(&timer));
+    printf("Running time in ms: %ld\n", timer_delta_ms(&timer));
     timer_pause(&timer);
 
     glfwTerminate();
