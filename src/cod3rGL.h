@@ -5,11 +5,10 @@
 #include <stdlib.h>
 #include "external/glad.h"
 #include "utils.h"
+#include "glisy/math.h"
 
 #define DEFAULT_ATTRIB_POSITION_NAME "vertexPosition"
 #define DEFAULT_ATTRIB_COLOR_NAME "vertexColor"
-#define LOC_VERTEX_POSITION 0
-#define LOC_VERTEX_COLOR 1
 #define MAX_SHADER_LOCATIONS 32      // Maximum number of predefined locations stored in shader struct
 
 // Structs
@@ -17,6 +16,14 @@ typedef struct Shader {
     unsigned int id;    // Shader Program ID
     int *locs;          // Shader locations array
 } Shader;
+
+typedef enum {
+    LOC_VERTEX_POSITION = 0,
+    LOC_VERTEX_COLOR = 1,
+    LOC_MATRIX_PROJECTION,
+    LOC_MATRIX_VIEW,
+    LOC_MATRIX_MODEL,
+} ShaderLocationIndex;
 
 typedef struct Mesh {
     int vertexCount;            // number of vertices stored in arrays
@@ -65,6 +72,10 @@ unsigned int currentVaoId = 0;
 
 Shader defaultShader;
 
+mat4 view;
+mat4 projection;
+mat4 model;
+
 // Functions
 Shader LoadShader(const char *vsFileName, const char *fsFileName);
 Shader LoadShaderCode(const char *vsCode, const char *fsCode);
@@ -78,6 +89,8 @@ Mesh createRect(Vector4 *color);
 void drawRect(Mesh mesh);
 
 void render();
+
+float *MatrixToFloatV(mat4 matrix);
 
 // Functions Declarations
 
@@ -230,6 +243,10 @@ void UnloadShader(Shader shader) {
 static void SetShaderDefaultLocations(Shader *shader) {
     shader->locs[LOC_VERTEX_POSITION] = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_POSITION_NAME);
     shader->locs[LOC_VERTEX_COLOR] = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_COLOR_NAME);
+
+    shader->locs[LOC_MATRIX_PROJECTION] = glGetUniformLocation(shader->id, "projection");
+    shader->locs[LOC_MATRIX_VIEW] = glGetUniformLocation(shader->id, "view");
+    shader->locs[LOC_MATRIX_MODEL] = glGetUniformLocation(shader->id, "model");
 }
 
 Mesh createRect(Vector4 *color) {
@@ -315,6 +332,18 @@ void render() {
     glUseProgram(defaultShader.id); // @TODO: create initializer
     glBindVertexArray(currentVaoId);
 
+    if (defaultShader.locs[LOC_MATRIX_PROJECTION] != -1) {
+        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_PROJECTION], 1, GL_FALSE, MatrixToFloatV(projection));
+    }
+
+    if (defaultShader.locs[LOC_MATRIX_VIEW] != -1) {
+        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_VIEW], 1, GL_FALSE, MatrixToFloatV(view));
+    }
+
+    if (defaultShader.locs[LOC_MATRIX_MODEL] != -1) {
+        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_MODEL], 1, GL_FALSE, MatrixToFloatV(model));
+    }
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -323,6 +352,29 @@ void render() {
     glDisable(GL_BLEND);
 
     glBindVertexArray(0);
+}
+
+float *MatrixToFloatV(mat4 matrix) {
+    float *buffer = malloc(16 * sizeof(float));
+
+    buffer[0] = matrix.m11;
+    buffer[1] = matrix.m12;
+    buffer[2] = matrix.m13;
+    buffer[3] = matrix.m14;
+    buffer[4] = matrix.m21;
+    buffer[5] = matrix.m22;
+    buffer[6] = matrix.m23;
+    buffer[7] = matrix.m24;
+    buffer[8] = matrix.m31;
+    buffer[9] = matrix.m32;
+    buffer[10] = matrix.m33;
+    buffer[11] = matrix.m34;
+    buffer[12] = matrix.m41;
+    buffer[13] = matrix.m42;
+    buffer[14] = matrix.m43;
+    buffer[15] = matrix.m44;
+
+    return buffer;
 }
 
 #endif // COD3R_GL_H
