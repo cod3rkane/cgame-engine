@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include "external/glad.h"
 #include "utils.h"
-#include "glisy/math.h"
+#include <cglm/cglm.h>
 
 #define DEFAULT_ATTRIB_POSITION_NAME "vertexPosition"
 #define DEFAULT_ATTRIB_COLOR_NAME "vertexColor"
@@ -72,9 +72,24 @@ unsigned int currentVaoId = 0;
 
 Shader defaultShader;
 
-mat4 view;
-mat4 projection;
-mat4 model;
+mat4 view = {
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+};
+mat4 projection = {
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+};
+mat4 model = {
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+};
 
 // Functions
 Shader LoadShader(const char *vsFileName, const char *fsFileName);
@@ -89,8 +104,6 @@ Mesh createRect(Vector4 *color);
 void drawRect(Mesh mesh);
 
 void render();
-
-float *MatrixToFloatV(mat4 matrix);
 
 // Functions Declarations
 
@@ -333,15 +346,15 @@ void render() {
     glBindVertexArray(currentVaoId);
 
     if (defaultShader.locs[LOC_MATRIX_PROJECTION] != -1) {
-        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_PROJECTION], 1, GL_FALSE, MatrixToFloatV(projection));
+        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_PROJECTION], 1, GL_FALSE, projection[0]);
     }
 
     if (defaultShader.locs[LOC_MATRIX_VIEW] != -1) {
-        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_VIEW], 1, GL_FALSE, MatrixToFloatV(view));
+        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_VIEW], 1, GL_FALSE, view[0]);
     }
 
     if (defaultShader.locs[LOC_MATRIX_MODEL] != -1) {
-        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_MODEL], 1, GL_FALSE, MatrixToFloatV(model));
+        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_MODEL], 1, GL_FALSE, model[0]);
     }
 
     glEnable(GL_BLEND);
@@ -352,29 +365,6 @@ void render() {
     glDisable(GL_BLEND);
 
     glBindVertexArray(0);
-}
-
-float *MatrixToFloatV(mat4 matrix) {
-    float *buffer = malloc(16 * sizeof(float));
-
-    buffer[0] = matrix.m11;
-    buffer[1] = matrix.m12;
-    buffer[2] = matrix.m13;
-    buffer[3] = matrix.m14;
-    buffer[4] = matrix.m21;
-    buffer[5] = matrix.m22;
-    buffer[6] = matrix.m23;
-    buffer[7] = matrix.m24;
-    buffer[8] = matrix.m31;
-    buffer[9] = matrix.m32;
-    buffer[10] = matrix.m33;
-    buffer[11] = matrix.m34;
-    buffer[12] = matrix.m41;
-    buffer[13] = matrix.m42;
-    buffer[14] = matrix.m43;
-    buffer[15] = matrix.m44;
-
-    return buffer;
 }
 
 #endif // COD3R_GL_H
