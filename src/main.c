@@ -26,11 +26,13 @@ int main() {
 
     glViewport(0, 0, 1280, 720);
 
-    Shader defaultShader = LoadShader("src/shaders/vertex.glsl", "src/shaders/fragment.glsl");
+    defaultShader = LoadShader("src/shaders/vertex.glsl", "src/shaders/fragment.glsl");
     glGenVertexArrays(1, &currentVaoId);
 
     Vector4 blue = { 0.219608f, 0.619608f, 0.909804f, 1.0f };
     Mesh mesh = createRect(&blue);
+
+    drawRect(mesh);
 
     timer_t timer;
     timer_start(&timer);
@@ -41,17 +43,7 @@ int main() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glUseProgram(defaultShader.id);
-        glBindVertexArray(currentVaoId);
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-        glDisable(GL_BLEND);
-
-        glBindVertexArray(0);
+        render();
 
         glfwSwapBuffers(window);
     }
