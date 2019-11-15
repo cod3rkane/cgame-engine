@@ -20,6 +20,8 @@ add_executable(
   src/utils.h
 )
 
+include_directories(deps)
+
 include_directories(${OPENGL_INCLUDE_DIR} ${OPENGL_INCLUDE_DIRS})
 
 target_include_directories(cgame_engine PUBLIC ${OPENGL_INCLUDE_DIR})
