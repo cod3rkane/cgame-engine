@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include "cod3rGL.h"
 #include "external/timer.h"
+#include "glisy/math.h"
 
 int main() {
     glfwInit();
@@ -36,6 +37,15 @@ int main() {
 
     timer_t timer;
     timer_start(&timer);
+
+    vec3 position = {0, 0, -3};
+    vec3 eye = {0, 0, 0};
+    vec3 up = {0, 1, 0};
+    mat4_identity(model);
+    mat4_identity(projection);
+    view = mat4_lookAt(eye, position, up);
+    // projection = mat4_perspective(45, 1, 0.1f, 100.f);
+    model = mat4_translate(model, vec3(1, 1, 1));
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
