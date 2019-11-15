@@ -12,11 +12,6 @@
 #define LOC_VERTEX_COLOR 1
 #define MAX_SHADER_LOCATIONS 32      // Maximum number of predefined locations stored in shader struct
 
-// Global Variables
-
-static int currentBuffer = 0;
-unsigned int currentVaoId = 0;
-
 // Structs
 typedef struct Shader {
     unsigned int id;    // Shader Program ID
@@ -63,6 +58,13 @@ typedef struct Vector4 {
     float w;
 } Vector4;
 
+// Global Variables
+
+static int currentBuffer = 0;
+unsigned int currentVaoId = 0;
+
+Shader defaultShader;
+
 // Functions
 Shader LoadShader(const char *vsFileName, const char *fsFileName);
 Shader LoadShaderCode(const char *vsCode, const char *fsCode);
@@ -73,6 +75,9 @@ static void SetShaderDefaultLocations(Shader *shader);
 char *LoadText(const char *fileName);
 
 Mesh createRect(Vector4 *color);
+void drawRect(Mesh mesh);
+
+void render();
 
 // Functions Declarations
 
@@ -228,7 +233,7 @@ static void SetShaderDefaultLocations(Shader *shader) {
 }
 
 Mesh createRect(Vector4 *color) {
-    Mesh mesh;
+    Mesh mesh = { 0 };
     mesh.vertices = (float *)malloc( 12 * sizeof(float));
     mesh.colors = (float *)malloc( 16 * sizeof(float));
     mesh.indices = (unsigned int *)malloc(6 * sizeof(unsigned int));
@@ -245,35 +250,39 @@ Mesh createRect(Vector4 *color) {
         -0.5f,  0.5f, 0.0f   // top left 
     };
 
-    float *colors = (float *)malloc( 16 * sizeof(float));
-
-    if (color != NULL) {
-        for (int i = 0; i < 4; i++) {
-            colors[i * 4] = color->x;
-            colors[i * 4 + 1] = color->y;
-            colors[i * 4 + 2] = color->z;
-            colors[i * 4 + 3] = color->w;
-        }
-    } else {
-        float whiteColor[] = {
-            1.0f, 1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f, 1.0f
-        };
-
-        colors = whiteColor;
-    }
-
     unsigned int indices[] = {
         0, 1, 3,  // first Triangle
         1, 2, 3   // second Triangle
     };
 
-    mesh.vertices = vertices;
-    mesh.indices = indices;
-    mesh.colors = colors;
+    for (int i = 0; i < 12; i++) {
+        mesh.vertices[i] = vertices[i];
+    }
 
+    if (color == NULL) {
+        // default white
+        color = malloc(sizeof(Vector2));
+        color->x = 1.0f;
+        color->y = 1.0f;
+        color->z = 1.0f;
+        color->w = 1.0f;
+    }
+
+    for (int i = 0; i < 4; i++) {
+        mesh.colors[i * 4] = color->x;
+        mesh.colors[i * 4 + 1] = color->y;
+        mesh.colors[i * 4 + 2] = color->z;
+        mesh.colors[i * 4 + 3] = color->w;
+    }
+
+    for (int i = 0; i < 6; i++) {
+        mesh.indices[i] = indices[i];
+    }
+
+    return mesh;
+}
+
+void drawRect(Mesh mesh) {
     glGenBuffers(1, &mesh.vboId[0]);
     glGenBuffers(1, &mesh.vboId[1]);
     glGenBuffers(1, &mesh.vboId[2]);
@@ -297,8 +306,23 @@ Mesh createRect(Vector4 *color) {
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+}
 
-    return mesh;
+void render() {
+    // @TODO: 3D render
+    // @TODO: 2D render
+    // @TODO: create dynamic buffer
+    glUseProgram(defaultShader.id); // @TODO: create initializer
+    glBindVertexArray(currentVaoId);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    glDisable(GL_BLEND);
+
+    glBindVertexArray(0);
 }
 
 #endif // COD3R_GL_H
