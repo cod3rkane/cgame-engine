@@ -18,7 +18,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 8);
 
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "CGame - Learn OpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "CGame - Learn OpenGL", NULL, NULL);
     glfwMakeContextCurrent(window);
 
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
@@ -28,14 +28,11 @@ int main() {
         return -1;
     }
 
-    defaultShader = LoadShader("src/shaders/vertex.glsl", "src/shaders/fragment.glsl");
-    glGenVertexArrays(1, &currentVaoId);
-    glGenBuffers(1, &currentElementBuffer.bufferId);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12 * sizeof(unsigned int), NULL, GL_STATIC_DRAW);
+    InitCod3rGL(windowWidth, windowHeight);
 
     Vector4 blue = { 0.219608f, 0.619608f, 0.909804f, 1.0f };
-    Mesh mesh = createRect(&blue, (vec3){ 1.0f, 0.8f, 0.0f });
-    Mesh mesh2 = createRect(NULL, (vec3){ -1.0f, 0.8f, 0.0f });
+    Mesh mesh = CreateRect(&blue, (vec3){ 1.0f, 0.8f, 0.0f });
+    Mesh mesh2 = CreateRect(NULL, (vec3){ -1.0f, 0.8f, 0.0f });
 
     timer_t timer;
     timer_start(&timer);
@@ -43,16 +40,15 @@ int main() {
     glm_perspective(glm_rad(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f, projection);
     glm_translate(view, (vec3){0.0f, 0.0f, -3.0f});
 
-    // glm_translate(model, (vec3){ 0.0f, 0.0f, 0.0f });
+    int frameBufferWidth, frameBufferHeight;
 
-    
     while (!glfwWindowShouldClose(window)) {
-        glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
+        glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
 
         glfwPollEvents();
 
         glMatrixMode(GL_PROJECTION);
-        glViewport(0, 0, windowWidth, windowHeight);
+        glViewport(0, 0, frameBufferWidth, frameBufferHeight);
         glMatrixMode(GL_MODELVIEW);
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -90,13 +86,13 @@ int main() {
         glVertexAttribPointer(LOC_VERTEX_COLOR, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
         glEnableVertexAttribArray(LOC_VERTEX_COLOR);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentElementBuffer.bufferId);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentIndexBuffer.bufferId);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12 * sizeof(unsigned int), mesh.indices, GL_STATIC_DRAW);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
-        render();
+        RenderCod3rGL();
 
         glfwSwapBuffers(window);
     }
@@ -105,6 +101,7 @@ int main() {
     printf("Running time in ms: %ld\n", timer_delta_ms(&timer));
     timer_pause(&timer);
 
+    CleanCod3rGL();
     glfwTerminate();
     return 0;
 }

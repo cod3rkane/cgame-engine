@@ -71,13 +71,19 @@ typedef struct DynamicIBuffer {
     int *data;
 } DynamicIBuffer;
 
+typedef struct DynamicFBuffer {
+    int length;
+    unsigned int bufferId;
+    float *data;
+} DynamicFBuffer;
+
 // Global Variables
 
-static int drawCalls = 0;
-static int currentBuffer = 0;
 unsigned int currentVaoId = 0;
 
-DynamicIBuffer currentElementBuffer;
+DynamicFBuffer currentVerticesBuffer;
+DynamicFBuffer currentColorsBuffer;
+DynamicIBuffer currentIndexBuffer;
 
 Shader defaultShader;
 
@@ -109,10 +115,13 @@ void UnloadShader(Shader shader);
 static void SetShaderDefaultLocations(Shader *shader);
 char *LoadText(const char *fileName);
 
-Mesh createRect(Vector4 *color, vec3 position);
-void drawRect(Mesh mesh);
+Mesh CreateRect(Vector4 *color, vec3 position);
+void DrawRect(Mesh mesh);
 
-void render();
+void InitCod3rGL(int windowWidth, int windowHeight); // Initialise all global variables and other setups.
+void CleanCod3rGL();
+
+void RenderCod3rGL();
 
 // Functions Declarations
 
@@ -271,7 +280,7 @@ static void SetShaderDefaultLocations(Shader *shader) {
     shader->locs[LOC_MATRIX_MODEL] = glGetUniformLocation(shader->id, "model");
 }
 
-Mesh createRect(Vector4 *color, vec3 position) {
+Mesh CreateRect(Vector4 *color, vec3 position) {
     Mesh mesh = { 0 };
     mesh.vertices = (float *)malloc( 24 * sizeof(float));
     mesh.colors = (float *)malloc( 32 * sizeof(float));
@@ -346,7 +355,7 @@ Mesh createRect(Vector4 *color, vec3 position) {
     return mesh;
 }
 
-void drawRect(Mesh mesh) {
+void DrawRect(Mesh mesh) {
     glBindVertexArray(currentVaoId); // current global VAO
 
     glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
@@ -363,14 +372,14 @@ void drawRect(Mesh mesh) {
 
     // GLint size = 0;
     // glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentElementBuffer.bufferId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentIndexBuffer.bufferId);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12 * sizeof(unsigned int), mesh.indices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
 
-void render() {
+void RenderCod3rGL() {
     // @TODO: 3D render
     // @TODO: 2D render
     // @TODO: create dynamic buffer
@@ -392,13 +401,35 @@ void render() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentElementBuffer.bufferId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentIndexBuffer.bufferId);
 
     glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
 
     glDisable(GL_BLEND);
 
     glBindVertexArray(0);
+    glUseProgram(0);
+}
+
+void InitCod3rGL(int windowWidth, int windowHeight) {
+    // Initialise buffers
+    glGenVertexArrays(1, &currentVaoId);
+    glGenBuffers(1, &currentVerticesBuffer.bufferId);
+    glGenBuffers(1, &currentColorsBuffer.bufferId);
+    glGenBuffers(1, &currentIndexBuffer.bufferId);
+
+    defaultShader = LoadShader("src/shaders/vertex.glsl", "src/shaders/fragment.glsl");
+
+    // setup matrices
+    glm_perspective(glm_rad(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f, projection);
+    glm_translate(view, (vec3){0.0f, 0.0f, -3.0f});
+}
+
+void CleanCod3rGL() {
+    glDeleteVertexArrays(1, &currentVaoId);
+    glDeleteBuffers(1, &currentVerticesBuffer.bufferId);
+    glDeleteBuffers(1, &currentColorsBuffer.bufferId);
+    glDeleteBuffers(1, &currentIndexBuffer.bufferId);
 }
 
 #endif // COD3R_GL_H
