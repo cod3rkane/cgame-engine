@@ -273,10 +273,10 @@ static void SetShaderDefaultLocations(Shader *shader) {
 
 Mesh createRect(Vector4 *color, vec3 position) {
     Mesh mesh = { 0 };
-    mesh.vertices = (float *)malloc( 12 * sizeof(float));
-    mesh.colors = (float *)malloc( 16 * sizeof(float));
-    mesh.indices = (unsigned int *)malloc(6 * sizeof(unsigned int));
-    mesh.vboId = (unsigned int *)malloc(4 * sizeof(unsigned int *));
+    mesh.vertices = (float *)malloc( 24 * sizeof(float));
+    mesh.colors = (float *)malloc( 32 * sizeof(float));
+    mesh.indices = (unsigned int *)malloc(12 * sizeof(unsigned int));
+    mesh.vboId = (unsigned int *)malloc(3 * sizeof(unsigned int *));
 
     mesh.vboId[0] = 0; // positions
     mesh.vboId[1] = 0; // colors
@@ -395,7 +395,6 @@ void render() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentElementBuffer.bufferId);
 
     glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
-    // glDrawArrays(GL_TRIANGLES, 0, 12);
 
     glDisable(GL_BLEND);
 
