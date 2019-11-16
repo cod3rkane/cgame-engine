@@ -355,6 +355,7 @@ Mesh CreateRect(Vector4 *color, vec3 position) {
 }
 
 void DrawRect(Mesh mesh) {
+    // @TODO: transformations
     StoreDataToBufferf(&currentVerticesBuffer, mesh.vertices, 12);
     StoreDataToBufferf(&currentColorsBuffer, mesh.colors, 16);
     StoreDataToBufferi(&currentIndexBuffer, mesh.indices, 6, 4);
@@ -398,7 +399,7 @@ void RenderCod3rGL() {
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentIndexBuffer.bufferId);
 
-    glDrawElements(GL_TRIANGLES, currentIndexBuffer.triangleCount, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, currentIndexBuffer.vertexCount, GL_UNSIGNED_INT, 0);
 
     glDisable(GL_BLEND);
 
