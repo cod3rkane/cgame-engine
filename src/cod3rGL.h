@@ -65,10 +65,19 @@ typedef struct Vector4 {
     float w;
 } Vector4;
 
+typedef struct DynamicIBuffer {
+    int length;
+    unsigned int bufferId;
+    int *data;
+} DynamicIBuffer;
+
 // Global Variables
 
+static int drawCalls = 0;
 static int currentBuffer = 0;
 unsigned int currentVaoId = 0;
+
+DynamicIBuffer currentElementBuffer;
 
 Shader defaultShader;
 
@@ -100,7 +109,7 @@ void UnloadShader(Shader shader);
 static void SetShaderDefaultLocations(Shader *shader);
 char *LoadText(const char *fileName);
 
-Mesh createRect(Vector4 *color);
+Mesh createRect(Vector4 *color, vec3 position);
 void drawRect(Mesh mesh);
 
 void render();
@@ -262,16 +271,21 @@ static void SetShaderDefaultLocations(Shader *shader) {
     shader->locs[LOC_MATRIX_MODEL] = glGetUniformLocation(shader->id, "model");
 }
 
-Mesh createRect(Vector4 *color) {
+Mesh createRect(Vector4 *color, vec3 position) {
     Mesh mesh = { 0 };
     mesh.vertices = (float *)malloc( 12 * sizeof(float));
     mesh.colors = (float *)malloc( 16 * sizeof(float));
     mesh.indices = (unsigned int *)malloc(6 * sizeof(unsigned int));
-    mesh.vboId = (unsigned int *)malloc(3 * sizeof(unsigned int *));
+    mesh.vboId = (unsigned int *)malloc(4 * sizeof(unsigned int *));
 
     mesh.vboId[0] = 0; // positions
     mesh.vboId[1] = 0; // colors
     mesh.vboId[2] = 0; // indices
+
+    glGenBuffers(1, &mesh.vboId[0]);
+    glGenBuffers(1, &mesh.vboId[1]);
+    glGenBuffers(1, &mesh.vboId[2]);
+    glGenBuffers(1, &mesh.vboId[3]);
 
     float vertices[] = {
          0.5f,  0.5f, 0.0f,  // top right
@@ -309,14 +323,30 @@ Mesh createRect(Vector4 *color) {
         mesh.indices[i] = indices[i];
     }
 
+    mat4 matrix = {
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    };
+    glm_translate(matrix, position);
+    vec4 newPos = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+    for (int i = 0; i < 12;) {
+        glm_mat4_mulv(matrix, (vec4){ mesh.vertices[i], mesh.vertices[i + 1], mesh.vertices[i + 2], 1.0f }, newPos);
+        mesh.vertices[i] = newPos[0];
+        mesh.vertices[i + 1] = newPos[1];
+        mesh.vertices[i + 2] = newPos[2];
+
+        i++;
+        i++;
+        i++;
+    }
+
     return mesh;
 }
 
 void drawRect(Mesh mesh) {
-    glGenBuffers(1, &mesh.vboId[0]);
-    glGenBuffers(1, &mesh.vboId[1]);
-    glGenBuffers(1, &mesh.vboId[2]);
-
     glBindVertexArray(currentVaoId); // current global VAO
 
     glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
@@ -331,8 +361,10 @@ void drawRect(Mesh mesh) {
     glVertexAttribPointer(LOC_VERTEX_COLOR, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
     glEnableVertexAttribArray(LOC_VERTEX_COLOR);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.vboId[2]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), mesh.indices, GL_STATIC_DRAW);
+    // GLint size = 0;
+    // glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentElementBuffer.bufferId);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12 * sizeof(unsigned int), mesh.indices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -360,7 +392,10 @@ void render() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentElementBuffer.bufferId);
+
+    glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
+    // glDrawArrays(GL_TRIANGLES, 0, 12);
 
     glDisable(GL_BLEND);
 
