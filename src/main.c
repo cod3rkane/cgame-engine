@@ -31,7 +31,11 @@ int main() {
     InitCod3rGL(windowWidth, windowHeight);
 
     Vector4 blue = { 0.219608f, 0.619608f, 0.909804f, 1.0f };
-    Mesh mesh = CreateRect(&blue, (vec3){ 1.0f, 0.8f, 0.0f });
+    Vector4 pink = { 0.901961f, 0.611765f, 1.0f };
+    Vector4 purple = { 0.721569f, 0.556863f, 0.909804f };
+    Vector4 magenta = { 0.72549f, 0.658824f, 1.0f };
+
+    Mesh mesh = CreateRect(&blue, (vec3){ 300.0f, 200.0f, 0.0f });
     Mesh mesh2 = CreateRect(NULL, (vec3){ -1.0f, 0.8f, 0.0f });
 
     timer_t timer;
@@ -54,43 +58,8 @@ int main() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // drawRect(mesh);
-        // drawRect(mesh2);
-
-        glBindVertexArray(currentVaoId); // current global VAO
-
-        // append vertices
-        for (int i = 0; i < 12; i++) {
-            // 12 == length of vertices
-            mesh.vertices[12 + i] = mesh2.vertices[i];
-        }
-        // append colors
-        for (int i = 0; i < 16; i++) {
-            // 12 == length of vertices
-            mesh.colors[16 + i] = mesh2.colors[i];
-        }
-        // append indices
-        for (int i = 0; i < 6; i++) {
-            mesh.indices[6 + i] = mesh2.indices[i] + 3 + 1;
-        }
-
-        glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
-        glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float), mesh.vertices, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(LOC_VERTEX_POSITION, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-        glEnableVertexAttribArray(LOC_VERTEX_POSITION);
-
-        glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
-        glBufferData(GL_ARRAY_BUFFER, 32 * sizeof(float), mesh.colors, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(LOC_VERTEX_COLOR, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-        glEnableVertexAttribArray(LOC_VERTEX_COLOR);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentIndexBuffer.bufferId);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12 * sizeof(unsigned int), mesh.indices, GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
+        DrawRect(mesh);
+        DrawRect(mesh2);
 
         RenderCod3rGL();
 
