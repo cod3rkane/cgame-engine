@@ -10,6 +10,7 @@
 #define DEFAULT_ATTRIB_POSITION_NAME "vertexPosition"
 #define DEFAULT_ATTRIB_COLOR_NAME "vertexColor"
 #define MAX_SHADER_LOCATIONS 32      // Maximum number of predefined locations stored in shader struct
+#define MAX_DYNAMIC_DATA_PER_BUFFER 1000 // Maximum number of items per Dynamic Buffer
 
 // Structs
 typedef struct Shader {
@@ -34,7 +35,7 @@ typedef struct Mesh {
     float *normals;             // vertex normals (XYZ - 3 components per vertex)
     float *tangents;            // vertex tangents (XYZW - 4 components per vertex)
     float *colors;              // vertex colors (RGBA - 4 components per vertex)
-    unsigned int *indices;    // vertex indices (in case vertex data comes indexed)
+    int *indices;    // vertex indices (in case vertex data comes indexed)
 
     // Animation vertex data
     float *animVertices;    // Animated vertex positions (after bones transformations)
@@ -66,13 +67,15 @@ typedef struct Vector4 {
 } Vector4;
 
 typedef struct DynamicIBuffer {
-    int length;
+    int vertexCount;
+    int triangleCount;
     unsigned int bufferId;
     int *data;
 } DynamicIBuffer;
 
 typedef struct DynamicFBuffer {
-    int length;
+    int vertexCount;
+    int triangleCount;
     unsigned int bufferId;
     float *data;
 } DynamicFBuffer;
@@ -81,9 +84,9 @@ typedef struct DynamicFBuffer {
 
 unsigned int currentVaoId = 0;
 
-DynamicFBuffer currentVerticesBuffer;
-DynamicFBuffer currentColorsBuffer;
-DynamicIBuffer currentIndexBuffer;
+DynamicFBuffer currentVerticesBuffer = { 0 };
+DynamicFBuffer currentColorsBuffer = { 0 };
+DynamicIBuffer currentIndexBuffer = { 0 };
 
 Shader defaultShader;
 
@@ -120,8 +123,11 @@ void DrawRect(Mesh mesh);
 
 void InitCod3rGL(int windowWidth, int windowHeight); // Initialise all global variables and other setups.
 void CleanCod3rGL();
-
 void RenderCod3rGL();
+
+void StoreDataToBufferf(DynamicFBuffer *buffer, float *data, int dataSize);
+void StoreDataToBufferi(DynamicIBuffer *buffer, int *data, int dataSize, int numTriangles);
+void CleanCurrentBuffers();
 
 // Functions Declarations
 
@@ -282,25 +288,15 @@ static void SetShaderDefaultLocations(Shader *shader) {
 
 Mesh CreateRect(Vector4 *color, vec3 position) {
     Mesh mesh = { 0 };
-    mesh.vertices = (float *)malloc( 24 * sizeof(float));
-    mesh.colors = (float *)malloc( 32 * sizeof(float));
-    mesh.indices = (unsigned int *)malloc(12 * sizeof(unsigned int));
-    mesh.vboId = (unsigned int *)malloc(3 * sizeof(unsigned int *));
-
-    mesh.vboId[0] = 0; // positions
-    mesh.vboId[1] = 0; // colors
-    mesh.vboId[2] = 0; // indices
-
-    glGenBuffers(1, &mesh.vboId[0]);
-    glGenBuffers(1, &mesh.vboId[1]);
-    glGenBuffers(1, &mesh.vboId[2]);
-    glGenBuffers(1, &mesh.vboId[3]);
+    mesh.vertices = (float *)malloc( 12 * sizeof(float));
+    mesh.colors = (float *)malloc( 16 * sizeof(float));
+    mesh.indices = (int *)malloc(6 * sizeof(unsigned int));
 
     float vertices[] = {
          0.5f,  0.5f, 0.0f,  // top right
          0.5f, -0.5f, 0.0f,  // bottom right
         -0.5f, -0.5f, 0.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f   // top left 
+        -0.5f,  0.5f, 0.0f   // top left
     };
 
     unsigned int indices[] = {
@@ -342,7 +338,7 @@ Mesh CreateRect(Vector4 *color, vec3 position) {
     vec4 newPos = { 0.0f, 0.0f, 0.0f, 0.0f };
 
     for (int i = 0; i < 12;) {
-        glm_mat4_mulv(matrix, (vec4){ mesh.vertices[i], mesh.vertices[i + 1], mesh.vertices[i + 2], 1.0f }, newPos);
+        glm_mat4_mulv(matrix, (vec4){ mesh.vertices[i], mesh.vertices[i + 1], mesh.vertices[i + 2], 0.01f }, newPos);
         mesh.vertices[i] = newPos[0];
         mesh.vertices[i + 1] = newPos[1];
         mesh.vertices[i + 2] = newPos[2];
@@ -356,35 +352,31 @@ Mesh CreateRect(Vector4 *color, vec3 position) {
 }
 
 void DrawRect(Mesh mesh) {
-    glBindVertexArray(currentVaoId); // current global VAO
-
-    glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
-    glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float), mesh.vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(LOC_VERTEX_POSITION, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-    glEnableVertexAttribArray(LOC_VERTEX_POSITION);
-
-    glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
-    glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), mesh.colors, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(LOC_VERTEX_COLOR, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-    glEnableVertexAttribArray(LOC_VERTEX_COLOR);
-
-    // GLint size = 0;
-    // glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentIndexBuffer.bufferId);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12 * sizeof(unsigned int), mesh.indices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    StoreDataToBufferf(&currentVerticesBuffer, mesh.vertices, 12);
+    StoreDataToBufferf(&currentColorsBuffer, mesh.colors, 16);
+    StoreDataToBufferi(&currentIndexBuffer, mesh.indices, 6, 4);
 }
 
 void RenderCod3rGL() {
     // @TODO: 3D render
     // @TODO: 2D render
-    // @TODO: create dynamic buffer
-    glUseProgram(defaultShader.id); // @TODO: create initializer
+    glUseProgram(defaultShader.id);
     glBindVertexArray(currentVaoId);
+
+    glBindBuffer(GL_ARRAY_BUFFER, currentVerticesBuffer.bufferId);
+    glBufferData(GL_ARRAY_BUFFER, currentVerticesBuffer.vertexCount * sizeof(float), currentVerticesBuffer.data, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(LOC_VERTEX_POSITION, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+    glEnableVertexAttribArray(LOC_VERTEX_POSITION);
+
+    glBindBuffer(GL_ARRAY_BUFFER, currentColorsBuffer.bufferId);
+    glBufferData(GL_ARRAY_BUFFER, currentColorsBuffer.vertexCount * sizeof(float), currentColorsBuffer.data, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(LOC_VERTEX_COLOR, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+    glEnableVertexAttribArray(LOC_VERTEX_COLOR);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentIndexBuffer.bufferId);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, currentIndexBuffer.vertexCount * sizeof(unsigned int), currentIndexBuffer.data, GL_STATIC_DRAW);
 
     if (defaultShader.locs[LOC_MATRIX_PROJECTION] != -1) {
         glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_PROJECTION], 1, GL_FALSE, projection[0]);
@@ -409,6 +401,8 @@ void RenderCod3rGL() {
 
     glBindVertexArray(0);
     glUseProgram(0);
+
+    CleanCurrentBuffers(); // Reset all currentbuffers
 }
 
 void InitCod3rGL(int windowWidth, int windowHeight) {
@@ -417,6 +411,11 @@ void InitCod3rGL(int windowWidth, int windowHeight) {
     glGenBuffers(1, &currentVerticesBuffer.bufferId);
     glGenBuffers(1, &currentColorsBuffer.bufferId);
     glGenBuffers(1, &currentIndexBuffer.bufferId);
+
+    // Allocate memory for Dynamic Buffers
+    currentVerticesBuffer.data = (float *)malloc(MAX_DYNAMIC_DATA_PER_BUFFER * sizeof(float));
+    currentColorsBuffer.data = (float *)malloc(MAX_DYNAMIC_DATA_PER_BUFFER * sizeof(float));
+    currentIndexBuffer.data = (int *)malloc(MAX_DYNAMIC_DATA_PER_BUFFER * sizeof(int));
 
     defaultShader = LoadShader("src/shaders/vertex.glsl", "src/shaders/fragment.glsl");
 
@@ -430,6 +429,30 @@ void CleanCod3rGL() {
     glDeleteBuffers(1, &currentVerticesBuffer.bufferId);
     glDeleteBuffers(1, &currentColorsBuffer.bufferId);
     glDeleteBuffers(1, &currentIndexBuffer.bufferId);
+}
+
+void StoreDataToBufferf(DynamicFBuffer *buffer, float *data, int dataSize) {
+    for (int i = 0; i < dataSize; i++) {
+        buffer->data[buffer->vertexCount + i] = data[i];
+    }
+
+    buffer->vertexCount += dataSize;
+}
+
+void StoreDataToBufferi(DynamicIBuffer *buffer, int *data, int dataSize, int numTriangles) {
+    for (int i = 0; i < dataSize; i++) {
+        buffer->data[buffer->vertexCount + i] = data[i] + buffer->triangleCount;
+    }
+
+    buffer->vertexCount += dataSize;
+    buffer->triangleCount += numTriangles;
+}
+
+void CleanCurrentBuffers() {
+    currentVerticesBuffer.vertexCount = 0;
+    currentColorsBuffer.vertexCount = 0;
+    currentIndexBuffer.vertexCount = 0;
+    currentIndexBuffer.triangleCount = 0;
 }
 
 #endif // COD3R_GL_H
