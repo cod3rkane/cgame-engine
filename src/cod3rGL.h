@@ -29,6 +29,7 @@ typedef enum {
 typedef struct Mesh {
     int vertexCount;            // number of vertices stored in arrays
     int triangleCount;          // number of triangles stored (indexed or not)
+    int indicesCount;           // number of indices stored
     float *vertices;            // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
     float *texcoords;           // vertex texture coordinates (UV - 2 components per vertex)
     float *texcoords2;          // vertex second texture coordinates (useful for lightmaps)
@@ -47,6 +48,13 @@ typedef struct Mesh {
     unsigned int vaoId;     // OpenGL Vertex Array Object id
     unsigned int *vboId;    // OpenGL Vertex Buffer Objects id
 } Mesh;
+
+typedef struct Entity {
+    mat4 matrix; // Local transform matrix
+
+    int meshCount; // Number of Meshes
+    Mesh *meshes; // Array of meshes
+} Entity;
 
 typedef struct Vector2 {
     float x;
@@ -118,9 +126,11 @@ void UnloadShader(Shader shader);
 static void SetShaderDefaultLocations(Shader *shader);
 char *LoadText(const char *fileName);
 
-Mesh CreateRect(Vector4 *color, vec3 position);
-void RotateMesh(Mesh *mesh, float angle, vec3 axis);
+Entity CreateRect(Vector4 *color, vec3 position);
 void DrawRect(Mesh mesh);
+
+void DrawEntity(Entity entity);
+void RotateEntity(Entity *entity, float angle);
 
 void InitCod3rGL(int windowWidth, int windowHeight); // Initialise all global variables and other setups.
 void CleanCod3rGL();
@@ -287,10 +297,16 @@ static void SetShaderDefaultLocations(Shader *shader) {
     shader->locs[LOC_MATRIX_MODEL] = glGetUniformLocation(shader->id, "model");
 }
 
-Mesh CreateRect(Vector4 *color, vec3 position) {
+Entity CreateRect(Vector4 *color, vec3 position) {
+    Entity entity;
+    entity.meshes = (Mesh *)malloc(sizeof(Mesh));
+    // entity.matrix = (mat4 *)malloc(sizeof(mat4));
+
     Mesh mesh = { 0 };
     mesh.vertexCount = 12;
     mesh.triangleCount = 4;
+    mesh.indicesCount = 6;
+
     mesh.vertices = (float *)malloc( 12 * sizeof(float));
     mesh.colors = (float *)malloc( 16 * sizeof(float));
     mesh.indices = (int *)malloc(6 * sizeof(unsigned int));
@@ -337,21 +353,14 @@ Mesh CreateRect(Vector4 *color, vec3 position) {
         0, 0, 1, 0,
         0, 0, 0, 1
     };
+
     glm_translate(matrix, position);
-    vec4 newPos = { 0.0f, 0.0f, 0.0f, 0.0f };
+    glm_mat4_copy(matrix, entity.matrix);
 
-    for (int i = 0; i < 12;) {
-        glm_mat4_mulv(matrix, (vec4){ mesh.vertices[i], mesh.vertices[i + 1], mesh.vertices[i + 2], 0.01f }, newPos);
-        mesh.vertices[i] = newPos[0];
-        mesh.vertices[i + 1] = newPos[1];
-        mesh.vertices[i + 2] = newPos[2];
+    entity.meshes[0] = mesh;
+    entity.meshCount = 1;
 
-        i++;
-        i++;
-        i++;
-    }
-
-    return mesh;
+    return entity;
 }
 
 void DrawRect(Mesh mesh) {
@@ -459,8 +468,37 @@ void CleanCurrentBuffers() {
     currentIndexBuffer.triangleCount = 0;
 }
 
-void RotateMesh(Mesh *mesh, float angle, vec3 axis) {
-    // @TODO:
+void DrawEntity(Entity entity) {
+    for (int i = 0; i < entity.meshCount; i++) {
+        // apply matrix to vertex
+        float formattedVertex[entity.meshes[i].vertexCount];
+        vec4 newPos = {0.0f, 0.0f, 0.0f, 0.0f};
+        for (int vertIndex = 0; vertIndex < entity.meshes[i].vertexCount;) {
+            glm_mat4_mulv(entity.matrix, (vec4){entity.meshes[i].vertices[vertIndex], entity.meshes[i].vertices[vertIndex + 1], entity.meshes[i].vertices[vertIndex + 2], 0.01f}, newPos);
+            formattedVertex[vertIndex] = newPos[0];
+            formattedVertex[vertIndex + 1] = newPos[1];
+            formattedVertex[vertIndex + 2] = newPos[2];
+
+            vertIndex++;
+            vertIndex++;
+            vertIndex++;
+        }
+
+        StoreDataToBufferf(&currentVerticesBuffer, formattedVertex, entity.meshes[i].vertexCount);
+        StoreDataToBufferf(&currentColorsBuffer, entity.meshes[i].colors, entity.meshes[i].vertexCount + entity.meshes[i].triangleCount);
+        StoreDataToBufferi(&currentIndexBuffer, entity.meshes[i].indices, entity.meshes[i].indicesCount, entity.meshes[i].triangleCount);
+    }
+}
+
+void RotateEntity(Entity *entity, float angle) {
+    mat4 matrix = {
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    };
+
+    glm_rotate(entity->matrix, angle, (vec3){ 0.0f, 0.0f, 1.0f });
 }
 
 #endif // COD3R_GL_H
