@@ -5,6 +5,9 @@
 #include "external/timer.h"
 #include <cglm/cglm.h>
 
+int windowWidth = 1280;
+int windowHeight = 720;
+
 int main() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -25,29 +28,38 @@ int main() {
         return -1;
     }
 
-    glViewport(0, 0, 1280, 720);
-
     defaultShader = LoadShader("src/shaders/vertex.glsl", "src/shaders/fragment.glsl");
     glGenVertexArrays(1, &currentVaoId);
+    glGenBuffers(1, &currentElementBuffer.bufferId);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12 * sizeof(unsigned int), NULL, GL_STATIC_DRAW);
 
     Vector4 blue = { 0.219608f, 0.619608f, 0.909804f, 1.0f };
-    Mesh mesh = createRect(&blue);
-
-    drawRect(mesh);
+    Mesh mesh = createRect(&blue, (vec3){ 1.0f, 0.0f, 0.0f });
+    Mesh mesh2 = createRect(NULL, (vec3){ -1.0f, 0.8f, 0.0f });
 
     timer_t timer;
     timer_start(&timer);
 
-    glm_perspective(glm_rad(45.0f), (float)1280 / (float)720, 0.1f, 100.0f, projection);
+    glm_perspective(glm_rad(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f, projection);
     glm_translate(view, (vec3){0.0f, 0.0f, -3.0f});
 
-    glm_translate(model, (vec3){0.0f, 0.7f, 0.0f});
+    // glm_translate(model, (vec3){ 0.0f, 0.0f, 0.0f });
 
+    
     while (!glfwWindowShouldClose(window)) {
+        glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
+
         glfwPollEvents();
+
+        glMatrixMode(GL_PROJECTION);
+        glViewport(0, 0, windowWidth, windowHeight);
+        glMatrixMode(GL_MODELVIEW);
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        drawRect(mesh);
+        drawRect(mesh2);
 
         render();
 
