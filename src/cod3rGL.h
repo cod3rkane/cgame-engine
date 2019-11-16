@@ -10,7 +10,7 @@
 #define DEFAULT_ATTRIB_POSITION_NAME "vertexPosition"
 #define DEFAULT_ATTRIB_COLOR_NAME "vertexColor"
 #define MAX_SHADER_LOCATIONS 32      // Maximum number of predefined locations stored in shader struct
-#define MAX_DYNAMIC_DATA_PER_BUFFER 1000 // Maximum number of items per Dynamic Buffer
+#define MAX_DYNAMIC_DATA_PER_BUFFER 50000 // Maximum number of items per Dynamic Buffer
 
 // Structs
 typedef struct Shader {
@@ -119,6 +119,7 @@ static void SetShaderDefaultLocations(Shader *shader);
 char *LoadText(const char *fileName);
 
 Mesh CreateRect(Vector4 *color, vec3 position);
+void RotateMesh(Mesh *mesh, float angle, vec3 axis);
 void DrawRect(Mesh mesh);
 
 void InitCod3rGL(int windowWidth, int windowHeight); // Initialise all global variables and other setups.
@@ -288,6 +289,8 @@ static void SetShaderDefaultLocations(Shader *shader) {
 
 Mesh CreateRect(Vector4 *color, vec3 position) {
     Mesh mesh = { 0 };
+    mesh.vertexCount = 12;
+    mesh.triangleCount = 4;
     mesh.vertices = (float *)malloc( 12 * sizeof(float));
     mesh.colors = (float *)malloc( 16 * sizeof(float));
     mesh.indices = (int *)malloc(6 * sizeof(unsigned int));
@@ -395,7 +398,7 @@ void RenderCod3rGL() {
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentIndexBuffer.bufferId);
 
-    glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, currentIndexBuffer.triangleCount, GL_UNSIGNED_INT, 0);
 
     glDisable(GL_BLEND);
 
@@ -453,6 +456,10 @@ void CleanCurrentBuffers() {
     currentColorsBuffer.vertexCount = 0;
     currentIndexBuffer.vertexCount = 0;
     currentIndexBuffer.triangleCount = 0;
+}
+
+void RotateMesh(Mesh *mesh, float angle, vec3 axis) {
+    // @TODO:
 }
 
 #endif // COD3R_GL_H
