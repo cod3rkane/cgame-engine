@@ -18,6 +18,8 @@ add_executable(
   src/cod3rGL.h
   src/utils.c
   src/utils.h
+  src/interactions.c
+  src/interactions.h
 )
 
 include_directories(deps)
