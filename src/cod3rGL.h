@@ -130,7 +130,7 @@ Entity CreateRect(Vector4 *color, vec3 position);
 void DrawRect(Mesh mesh);
 
 void DrawEntity(Entity entity);
-void RotateEntity(Entity *entity, float angle);
+void RotateEntityZ(Entity *entity, float angle);
 
 void InitCod3rGL(int windowWidth, int windowHeight); // Initialise all global variables and other setups.
 void CleanCod3rGL();
@@ -490,7 +490,7 @@ void DrawEntity(Entity entity) {
     }
 }
 
-void RotateEntity(Entity *entity, float angle) {
+void RotateEntityZ(Entity *entity, float angle) {
     mat4 matrix = {
         1, 0, 0, 0,
         0, 1, 0, 0,
