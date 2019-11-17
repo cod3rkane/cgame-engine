@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include "external/glad.h"
 #include <GLFW/glfw3.h>
+#define COD3R_GL_IMPLEMENTATION
 #include "cod3rGL.h"
 #include "external/timer.h"
 #include <cglm/cglm.h>
+#include "interactions.h"
 
 int windowWidth = 1280;
 int windowHeight = 720;
@@ -36,7 +38,7 @@ int main() {
 
     int frameBufferWidth, frameBufferHeight;
 
-    SetupCamera((vec3){ 0.0f, 0.0f, -10.0f }, (vec3){ 0.0f, 1.0f, 0.0f }, -90.0f, 0.0f);
+    SetupCamera((vec3){ 0.0f, 0.0f, -10.0f }, (vec3){ 0.0f, 1.0f, 0.0f }, -1.64f, -23.71f);
 
     Vector4 blue = { 0.219608f, 0.619608f, 0.909804f, 1.0f };
     Vector4 pink = { 0.901961f, 0.611765f, 1.0f, 1.0f };
@@ -45,7 +47,7 @@ int main() {
 
     Entity testeMeshA = CreateRect(&purple, (vec3){ 0.0f, 0.0f, 0.0f });
     Entity testeMeshB = CreateRect(&blue, (vec3){ 250.0f, 150.0f, 0.0f });
-    Entity testeMeshC = CreateRect(&pink, (vec3){ 0.0f, 0.0f, 0.0f });
+    Entity testeMeshC = CreateRect(&magenta, (vec3){ 0.0f, 0.0f, 0.0f });
 
     while (!glfwWindowShouldClose(window)) {
         glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
@@ -58,6 +60,8 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_MULTISAMPLE);
+
+        UserInputs(window, timer_delta_s(&timer), &currentCamera);
 
         RotateEntityZ(&testeMeshA, 0.04f);
         RotateEntityZ(&testeMeshB, 0.02f);
