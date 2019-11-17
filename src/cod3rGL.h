@@ -88,6 +88,29 @@ typedef struct DynamicFBuffer {
     float *data;
 } DynamicFBuffer;
 
+typedef struct Camera {
+    vec3 position;
+    vec3 front;
+    vec3 up;
+    vec3 right;
+    vec3 worldUp;
+
+    float yaw;
+    float pitch;
+    float movementSpeed;
+    float mouseSensitivity;
+    float zoom;
+
+    mat4 matrix;
+} Camera;
+
+enum CameraMovement {
+    FORWARD,
+    BACKWARD,
+    LEFT,
+    RIGHT
+};
+
 // Global Variables
 
 unsigned int currentVaoId = 0;
@@ -117,6 +140,8 @@ mat4 model = {
     0, 0, 0, 1
 };
 
+Camera currentCamera;
+
 // Functions
 Shader LoadShader(const char *vsFileName, const char *fsFileName);
 Shader LoadShaderCode(const char *vsCode, const char *fsCode);
@@ -139,6 +164,13 @@ void RenderCod3rGL();
 void StoreDataToBufferf(DynamicFBuffer *buffer, float *data, int dataSize);
 void StoreDataToBufferi(DynamicIBuffer *buffer, int *data, int dataSize, int numTriangles);
 void CleanCurrentBuffers();
+
+// Camera Functions
+
+void SetupCamera(vec3 position, vec3 up, float yaw, float pitch); // Setup camera default data
+void UpdateCameraVectors(); // Update Camera vectors
+void MouseMovementCamera(float xOffset, float yOffset, bool constraintPitch); // Update camera based on given arguments
+void SetViewMatrixCamera(); // Get Camera matrix
 
 // Functions Declarations
 
@@ -396,7 +428,7 @@ void RenderCod3rGL() {
     }
 
     if (defaultShader.locs[LOC_MATRIX_VIEW] != -1) {
-        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_VIEW], 1, GL_FALSE, view[0]);
+        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_VIEW], 1, GL_FALSE, currentCamera.matrix[0]);
     }
 
     if (defaultShader.locs[LOC_MATRIX_MODEL] != -1) {
@@ -434,7 +466,7 @@ void InitCod3rGL(int windowWidth, int windowHeight) {
 
     // setup matrices
     glm_perspective(glm_rad(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f, projection);
-    glm_translate(view, (vec3){0.0f, 0.0f, -3.0f});
+    glm_translate(view, (vec3){0.0f, 0.0f, -10.0f});
 }
 
 void CleanCod3rGL() {
@@ -499,6 +531,68 @@ void RotateEntityZ(Entity *entity, float angle) {
     };
 
     glm_rotate(entity->matrix, angle, (vec3){ 0.0f, 0.0f, 1.0f });
+}
+
+void SetupCamera(vec3 position, vec3 up, float yaw, float pitch) {
+    glm_translate(currentCamera.matrix, (vec3){0.0f, 0.0f, -10.0f});
+
+    glm_vec3_copy(position, currentCamera.position);
+    glm_vec3_copy(up, currentCamera.worldUp);
+
+    currentCamera.yaw = yaw;
+    currentCamera.pitch = pitch;
+
+    glm_vec3_copy((vec3){ 0.0f, 0.0f, -1.0f }, currentCamera.front);
+    currentCamera.movementSpeed = 2.5f;
+    currentCamera.mouseSensitivity = 0.1f;
+    currentCamera.zoom = 45.0f;
+
+    UpdateCameraVectors();
+}
+
+void UpdateCameraVectors() {
+    vec3 front;
+
+    front[0] = cos(glm_rad(currentCamera.yaw)) * cos(glm_rad(currentCamera.pitch));
+    front[1] = sin(glm_rad(currentCamera.pitch));
+    front[2] = sin(glm_rad(currentCamera.yaw)) * cos(glm_rad(currentCamera.pitch));
+
+    glm_normalize(front);
+    glm_vec3_copy(front, currentCamera.front);
+    glm_cross(currentCamera.front, currentCamera.worldUp, currentCamera.right);
+    glm_normalize(currentCamera.right);
+    glm_cross(currentCamera.right, currentCamera.front, currentCamera.up);
+    glm_normalize(currentCamera.up);
+
+    SetViewMatrixCamera();
+}
+
+void MouseMovementCamera(float xOffset, float yOffset, bool constraintPitch) {
+    const float SENSITIVITY = 0.1f;
+    xOffset *= SENSITIVITY;
+    yOffset *= SENSITIVITY;
+
+    currentCamera.yaw += xOffset;
+    currentCamera.pitch += yOffset;
+
+    if (constraintPitch) {
+        if (currentCamera.pitch > 89.0f) {
+            currentCamera.pitch = 89.0f;
+        }
+
+        if (currentCamera.pitch < -89.0f) {
+            currentCamera.pitch = -89.0f;
+        }
+    }
+
+    UpdateCameraVectors();
+}
+
+void SetViewMatrixCamera() {
+    vec3 center;
+
+    glm_vec3_mul(currentCamera.position, currentCamera.front, center);
+    glm_lookat(currentCamera.position, center, currentCamera.up, currentCamera.matrix);
 }
 
 #endif // COD3R_GL_H
