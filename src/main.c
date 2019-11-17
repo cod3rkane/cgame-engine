@@ -20,6 +20,7 @@ int main() {
 
     GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "CGame - Learn OpenGL", NULL, NULL);
     glfwMakeContextCurrent(window);
+    glfwSwapInterval(1);
 
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 
@@ -63,8 +64,10 @@ int main() {
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_MULTISAMPLE);
 
-        RotateEntityZ(&testeMeshA, 0.02f);
+        RotateEntityZ(&testeMeshA, 0.04f);
         RotateEntityZ(&testeMeshB, 0.02f);
         RotateEntityZ(&testeMeshC, 0.02f);
 
@@ -88,6 +91,9 @@ int main() {
     timer_pause(&timer);
 
     CleanCod3rGL();
+
+    glfwDestroyWindow(window);
     glfwTerminate();
+
     return 0;
 }
