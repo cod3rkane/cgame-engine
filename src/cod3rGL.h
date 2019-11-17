@@ -111,6 +111,40 @@ enum CameraMovement {
     RIGHT
 };
 
+// Functions
+Shader LoadShader(const char *vsFileName, const char *fsFileName);
+Shader LoadShaderCode(const char *vsCode, const char *fsCode);
+static unsigned int CompileShader(const char *shaderStr, int type);
+static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId);
+void UnloadShader(Shader shader);
+static void SetShaderDefaultLocations(Shader *shader);
+char *LoadText(const char *fileName);
+
+Entity CreateRect(Vector4 *color, vec3 position);
+void DrawRect(Mesh mesh);
+
+void DrawEntity(Entity entity);
+void RotateEntityZ(Entity *entity, float angle);
+
+void InitCod3rGL(int windowWidth, int windowHeight); // Initialise all global variables and other setups.
+void CleanCod3rGL();
+void RenderCod3rGL();
+
+void StoreDataToBufferf(DynamicFBuffer *buffer, float *data, int dataSize);
+void StoreDataToBufferi(DynamicIBuffer *buffer, int *data, int dataSize, int numTriangles);
+void CleanCurrentBuffers();
+
+// Camera Functions
+
+void SetupCamera(vec3 position, vec3 up, float yaw, float pitch); // Setup camera default data
+void UpdateCameraVectors(); // Update Camera vectors
+void MouseMovementCamera(float xOffset, float yOffset, bool constraintPitch); // Update camera based on given arguments
+void SetViewMatrixCamera(); // Get Camera matrix
+
+#endif // COD3R_GL_H
+
+#if defined(COD3R_GL_IMPLEMENTATION)
+
 // Global Variables
 
 unsigned int currentVaoId = 0;
@@ -142,37 +176,7 @@ mat4 model = {
 
 Camera currentCamera;
 
-// Functions
-Shader LoadShader(const char *vsFileName, const char *fsFileName);
-Shader LoadShaderCode(const char *vsCode, const char *fsCode);
-static unsigned int CompileShader(const char *shaderStr, int type);
-static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId);
-void UnloadShader(Shader shader);
-static void SetShaderDefaultLocations(Shader *shader);
-char *LoadText(const char *fileName);
-
-Entity CreateRect(Vector4 *color, vec3 position);
-void DrawRect(Mesh mesh);
-
-void DrawEntity(Entity entity);
-void RotateEntityZ(Entity *entity, float angle);
-
-void InitCod3rGL(int windowWidth, int windowHeight); // Initialise all global variables and other setups.
-void CleanCod3rGL();
-void RenderCod3rGL();
-
-void StoreDataToBufferf(DynamicFBuffer *buffer, float *data, int dataSize);
-void StoreDataToBufferi(DynamicIBuffer *buffer, int *data, int dataSize, int numTriangles);
-void CleanCurrentBuffers();
-
-// Camera Functions
-
-void SetupCamera(vec3 position, vec3 up, float yaw, float pitch); // Setup camera default data
-void UpdateCameraVectors(); // Update Camera vectors
-void MouseMovementCamera(float xOffset, float yOffset, bool constraintPitch); // Update camera based on given arguments
-void SetViewMatrixCamera(); // Get Camera matrix
-
-// Functions Declarations
+// Functions Implementations
 
 Shader LoadShader(const char *vsFileName, const char *fsFileName) {
     Shader shader = { 0 };
@@ -595,4 +599,4 @@ void SetViewMatrixCamera() {
     glm_lookat(currentCamera.position, center, currentCamera.up, currentCamera.matrix);
 }
 
-#endif // COD3R_GL_H
+#endif // COD3R_GL_IMPLEMENTATION
