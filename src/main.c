@@ -47,6 +47,13 @@ int main() {
     Entity testeMeshB = CreateRect(&blue, (vec3){ 300.0f, 0.0f, 0.0f });
     Entity testeMeshC = CreateRect(&pink, (vec3){ 400.0f, 0.0f, 0.0f });
 
+    int MAX_ITEMS = 3000;
+    Entity items[MAX_ITEMS];
+
+    for (int i = 0; i < MAX_ITEMS; i++) {
+        items[i] = CreateRect(i % 2 ? &pink : &magenta, (vec3){ i * 10.0f, i * 2.0f, 0.0f });
+    }
+
     while (!glfwWindowShouldClose(window)) {
         glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
 
@@ -57,9 +64,14 @@ int main() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        RotateEntity(&testeMeshA, 0.02f);
-        RotateEntity(&testeMeshB, 0.02f);
-        RotateEntity(&testeMeshC, 0.02f);
+        RotateEntityZ(&testeMeshA, 0.02f);
+        RotateEntityZ(&testeMeshB, 0.02f);
+        RotateEntityZ(&testeMeshC, 0.02f);
+
+        for (int i = 0; i < MAX_ITEMS; i++) {
+            RotateEntityZ(&items[i], 0.01f);
+            DrawEntity(items[i]);
+        }
 
         DrawEntity(testeMeshA);
         DrawEntity(testeMeshB);
