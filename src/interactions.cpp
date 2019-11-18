@@ -32,7 +32,6 @@ void UserInputs(GLFWwindow *window, float deltaTime, Camera *camera) {
     glfwGetCursorPos(window, &mouseX, &mouseY);
     int mouseLeftBtn = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
     if (mouseLeftBtn == GLFW_PRESS) {
-        std::cout << "here" << std::endl;
         if (firstMouse) {
             lastMouseX = mouseX;
             lastMouseY = mouseY;
