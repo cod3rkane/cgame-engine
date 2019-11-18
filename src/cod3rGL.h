@@ -539,8 +539,6 @@ void RotateEntityZ(Entity *entity, float angle) {
 }
 
 void SetupCamera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) {
-    currentCamera.matrix = glm::translate(currentCamera.matrix, glm::vec3(0.0f, 0.0f, -10.0f));
-
     currentCamera.position = position;
     currentCamera.worldUp = up;
 
@@ -571,7 +569,7 @@ void MouseMovementCamera(float xOffset, float yOffset, bool constraintPitch) {
     const float SENSITIVITY = 0.1f;
     xOffset *= SENSITIVITY;
     yOffset *= SENSITIVITY;
-
+    
     currentCamera.yaw += xOffset;
     currentCamera.pitch += yOffset;
 
