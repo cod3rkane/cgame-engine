@@ -13,36 +13,26 @@ void UserInputs(GLFWwindow *window, float deltaTime, Camera *camera) {
     float cameraSpeed = 2.5f * deltaTime;
     // Camera Actions
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        // position += front * speed
-        glm_vec3_muladds(camera->front, cameraSpeed, camera->position);
+        camera->position += cameraSpeed * camera->front;
     }
 
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        vec3 speed;
-        glm_vec3_muladds(camera->front, cameraSpeed, speed);
-        // camera position = pos - speed
-        glm_vec3_sub(camera->position, speed, camera->position);
+        camera->position -= cameraSpeed * camera->front;
     }
 
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        vec3 crossed;
-        glm_cross(camera->front, camera->up, crossed);
-        glm_vec3_normalize(crossed);
-        glm_vec3_adds(crossed, cameraSpeed, crossed);
-        glm_vec3_sub(camera->position, crossed, camera->position);
+        camera->position -= glm::normalize(glm::cross(camera->front, camera->up)) * cameraSpeed;
     }
     
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        vec3 crossed;
-        glm_cross(camera->front, camera->up, crossed);
-        glm_vec3_normalize(crossed);
-        glm_vec3_muladds(crossed, cameraSpeed, camera->position);
+        camera->position += glm::normalize(glm::cross(camera->front, camera->up)) * cameraSpeed;
     }
 
     double mouseX, mouseY;
     glfwGetCursorPos(window, &mouseX, &mouseY);
     int mouseLeftBtn = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
     if (mouseLeftBtn == GLFW_PRESS) {
+        std::cout << "here" << std::endl;
         if (firstMouse) {
             lastMouseX = mouseX;
             lastMouseY = mouseY;
@@ -51,7 +41,7 @@ void UserInputs(GLFWwindow *window, float deltaTime, Camera *camera) {
 
         float xoffset = mouseX - lastMouseX;
         float yoffset = lastMouseY - mouseY;
-        MouseMovementCamera(xoffset, yoffset, true);
+        MouseMovementCamera(xoffset, yoffset, false);
     }
 
     lastMouseX = mouseX;

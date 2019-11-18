@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
-project(cgame_engine C)
+project(cgame_engine)
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
 
 find_package(PkgConfig REQUIRED)
 find_package(OpenGL REQUIRED)
@@ -9,20 +9,16 @@ find_package(glfw3 3.3 REQUIRED)
 
 add_executable(
   cgame_engine
-  src/main.c
+  src/main.cpp
   src/external/glad.c
   src/external/glad.h
   src/external/khrplatform.h
-  src/external/timer.c
-  src/external/timer.h
   src/cod3rGL.h
-  src/utils.c
-  src/utils.h
-  src/interactions.c
+  src/interactions.cpp
   src/interactions.h
 )
 
-include_directories(deps)
+include_directories(src/external/include)
 
 include_directories(${OPENGL_INCLUDE_DIR} ${OPENGL_INCLUDE_DIRS})
 

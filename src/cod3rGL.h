@@ -3,9 +3,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <glm/glm.hpp>
+#include <glm/ext.hpp>
 #include "external/glad.h"
-#include "utils.h"
-#include <cglm/cglm.h>
 
 #define DEFAULT_ATTRIB_POSITION_NAME "vertexPosition"
 #define DEFAULT_ATTRIB_COLOR_NAME "vertexColor"
@@ -50,7 +50,7 @@ typedef struct Mesh {
 } Mesh;
 
 typedef struct Entity {
-    mat4 matrix; // Local transform matrix
+    glm::mat4 matrix; // Local transform matrix
 
     int meshCount; // Number of Meshes
     Mesh *meshes; // Array of meshes
@@ -89,11 +89,11 @@ typedef struct DynamicFBuffer {
 } DynamicFBuffer;
 
 typedef struct Camera {
-    vec3 position;
-    vec3 front;
-    vec3 up;
-    vec3 right;
-    vec3 worldUp;
+    glm::vec3 position;
+    glm::vec3 front;
+    glm::vec3 up;
+    glm::vec3 right;
+    glm::vec3 worldUp;
 
     float yaw;
     float pitch;
@@ -101,7 +101,7 @@ typedef struct Camera {
     float mouseSensitivity;
     float zoom;
 
-    mat4 matrix;
+    glm::mat4 matrix;
 } Camera;
 
 enum CameraMovement {
@@ -120,7 +120,7 @@ void UnloadShader(Shader shader);
 static void SetShaderDefaultLocations(Shader *shader);
 char *LoadText(const char *fileName);
 
-Entity CreateRect(Vector4 *color, vec3 position);
+Entity CreateRect(Vector4 *color, glm::vec3 position);
 void DrawRect(Mesh mesh);
 
 void DrawEntity(Entity entity);
@@ -136,10 +136,10 @@ void CleanCurrentBuffers();
 
 // Camera Functions
 
-void SetupCamera(vec3 position, vec3 up, float yaw, float pitch); // Setup camera default data
+void SetupCamera(glm::vec3 position, glm::vec3 up, float yaw, float pitch); // Setup camera default data
 void UpdateCameraVectors(); // Update Camera vectors
 void MouseMovementCamera(float xOffset, float yOffset, bool constraintPitch); // Update camera based on given arguments
-void SetViewMatrixCamera(); // Get Camera matrix
+glm::mat4 GetViewMatrixCamera(); // Get Camera matrix
 
 #endif // COD3R_GL_H
 
@@ -155,19 +155,19 @@ DynamicIBuffer currentIndexBuffer = { 0 };
 
 Shader defaultShader;
 
-mat4 view = {
+glm::mat4 view = {
     1, 0, 0, 0,
     0, 1, 0, 0,
     0, 0, 1, 0,
     0, 0, 0, 1
 };
-mat4 projection = {
+glm::mat4 projection = {
     1, 0, 0, 0,
     0, 1, 0, 0,
     0, 0, 1, 0,
     0, 0, 0, 1
 };
-mat4 model = {
+glm::mat4 model = {
     1, 0, 0, 0,
     0, 1, 0, 0,
     0, 0, 1, 0,
@@ -216,7 +216,7 @@ char *LoadText(const char *fileName) {
 
             fclose(textFile);
         } else {
-            TraceLog(LOG_WARNING, "[%s] Text file could not be opened\n", fileName);
+            std::cout << fileName << " Text file could not be opened" << std::endl;
         }
     }
 
@@ -235,7 +235,7 @@ Shader LoadShaderCode(const char *vsCode, const char *fsCode) {
 
     shader.id = LoadShaderProgram(vertexShaderId, fragmentShaderId);
 
-    if (shader.id == 0) TraceLog(LOG_WARNING, "Custom shader could not be\n");
+    if (shader.id == 0) std::cout << "Custom shader could not be" << std::endl;
 
     if (shader.id > 0) SetShaderDefaultLocations(&shader);
 
@@ -253,7 +253,7 @@ Shader LoadShaderCode(const char *vsCode, const char *fsCode) {
 
         // get the location of the named uniform
         unsigned int location = glGetUniformLocation(shader.id, name);
-        TraceLog(LOG_DEBUG, "[Shader ID: %i] Active uniform [%s] set at locatiom: %i\n", shader.id, name, location);
+        printf("[Shader ID: %i] Active uniform [%s] set at locatiom: %i\n", shader.id, name, location);
     }
 
     return shader;
@@ -268,7 +268,7 @@ static unsigned int CompileShader(const char *shaderStr, int type) {
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
     if (success != GL_TRUE) {
-        TraceLog(LOG_WARNING, "[Shader ID: %i] Failed to compile shader...\n", shader);
+        printf("[Shader ID: %i] Failed to compile shader...\n", shader);
         int maxLength = 0;
         int length;
 
@@ -276,10 +276,10 @@ static unsigned int CompileShader(const char *shaderStr, int type) {
 
         char log[maxLength];
         glGetShaderInfoLog(shader, maxLength, &length, log);
-        TraceLog(LOG_INFO, "%s", log);
+        printf("%s\n", log);
     }
 
-    TraceLog(LOG_INFO, "[Shader ID: %i] Shader compiled successfully\n", shader);
+    printf("[Shader ID: %i] Shader compiled successfully\n", shader);
 
     return shader;
 }
@@ -300,7 +300,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
     glGetProgramiv(program, GL_LINK_STATUS, &success);
 
     if (success == GL_FALSE) {
-        TraceLog(LOG_WARNING, "[Program ID: %i] Failed to link shader program...\n", program);
+        printf("[Program ID: %i] Failed to link shader program...\n", program);
         int maxLength = 0;
         int length;
 
@@ -309,9 +309,9 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 
         glGetProgramInfoLog(program, maxLength, &length, log);
 
-        TraceLog(LOG_INFO, "%s", log);
+        printf("%s", log);
     } else {
-        TraceLog(LOG_INFO, "[Program ID: %i] Shader program loaded successfully\n", program);
+        printf("[Program ID: %i] Shader program loaded successfully\n", program);
     }
 
     return program;
@@ -320,7 +320,7 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 void UnloadShader(Shader shader) {
     if (shader.id > 0) {
         glDeleteShader(shader.id);
-        TraceLog(LOG_INFO, "[Program ID: %i] Unloaded shader program data\n", shader.id);
+        printf("[Program ID: %i] Unloaded shader program data\n", shader.id);
     }
 }
 
@@ -333,7 +333,7 @@ static void SetShaderDefaultLocations(Shader *shader) {
     shader->locs[LOC_MATRIX_MODEL] = glGetUniformLocation(shader->id, "model");
 }
 
-Entity CreateRect(Vector4 *color, vec3 position) {
+Entity CreateRect(Vector4 *color, glm::vec3 position) {
     Entity entity;
     entity.meshes = (Mesh *)malloc(sizeof(Mesh));
     // entity.matrix = (mat4 *)malloc(sizeof(mat4));
@@ -365,7 +365,7 @@ Entity CreateRect(Vector4 *color, vec3 position) {
 
     if (color == NULL) {
         // default white
-        color = malloc(sizeof(Vector2));
+        // color = malloc(sizeof(Vector4));
         color->x = 1.0f;
         color->y = 1.0f;
         color->z = 1.0f;
@@ -383,15 +383,15 @@ Entity CreateRect(Vector4 *color, vec3 position) {
         mesh.indices[i] = indices[i];
     }
 
-    mat4 matrix = {
+    glm::mat4 matrix = {
         1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
         0, 0, 0, 1
     };
 
-    glm_translate(matrix, position);
-    glm_mat4_copy(matrix, entity.matrix);
+    matrix = glm::translate(matrix, position);
+    entity.matrix = matrix;
 
     entity.meshes[0] = mesh;
     entity.meshCount = 1;
@@ -428,15 +428,15 @@ void RenderCod3rGL() {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, currentIndexBuffer.vertexCount * sizeof(unsigned int), currentIndexBuffer.data, GL_STATIC_DRAW);
 
     if (defaultShader.locs[LOC_MATRIX_PROJECTION] != -1) {
-        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_PROJECTION], 1, GL_FALSE, projection[0]);
+        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_PROJECTION], 1, GL_FALSE, glm::value_ptr(projection));
     }
 
     if (defaultShader.locs[LOC_MATRIX_VIEW] != -1) {
-        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_VIEW], 1, GL_FALSE, currentCamera.matrix[0]);
+        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_VIEW], 1, GL_FALSE, glm::value_ptr(GetViewMatrixCamera()));
     }
 
     if (defaultShader.locs[LOC_MATRIX_MODEL] != -1) {
-        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_MODEL], 1, GL_FALSE, model[0]);
+        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_MODEL], 1, GL_FALSE, glm::value_ptr(model));
     }
 
     glEnable(GL_BLEND);
@@ -469,8 +469,8 @@ void InitCod3rGL(int windowWidth, int windowHeight) {
     defaultShader = LoadShader("src/shaders/vertex.glsl", "src/shaders/fragment.glsl");
 
     // setup matrices
-    glm_perspective(glm_rad(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f, projection);
-    glm_translate(view, (vec3){0.0f, 0.0f, -10.0f});
+    projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -10.0f));
 }
 
 void CleanCod3rGL() {
@@ -508,9 +508,10 @@ void DrawEntity(Entity entity) {
     for (int i = 0; i < entity.meshCount; i++) {
         // apply matrix to vertex
         float formattedVertex[entity.meshes[i].vertexCount];
-        vec4 newPos = {0.0f, 0.0f, 0.0f, 0.0f};
+        glm::vec4 newPos = { 0.0f, 0.0f, 0.0f, 0.0f };
         for (int vertIndex = 0; vertIndex < entity.meshes[i].vertexCount;) {
-            glm_mat4_mulv(entity.matrix, (vec4){entity.meshes[i].vertices[vertIndex], entity.meshes[i].vertices[vertIndex + 1], entity.meshes[i].vertices[vertIndex + 2], 0.01f}, newPos);
+            // glm_mat4_mulv(entity.matrix, (vec4){entity.meshes[i].vertices[vertIndex], entity.meshes[i].vertices[vertIndex + 1], entity.meshes[i].vertices[vertIndex + 2], 0.01f}, newPos);
+            newPos = entity.matrix * glm::vec4(entity.meshes[i].vertices[vertIndex], entity.meshes[i].vertices[vertIndex + 1], entity.meshes[i].vertices[vertIndex + 2], 0.01f);
             formattedVertex[vertIndex] = newPos[0];
             formattedVertex[vertIndex + 1] = newPos[1];
             formattedVertex[vertIndex + 2] = newPos[2];
@@ -527,26 +528,26 @@ void DrawEntity(Entity entity) {
 }
 
 void RotateEntityZ(Entity *entity, float angle) {
-    mat4 matrix = {
+    glm::mat4 matrix = {
         1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
         0, 0, 0, 1
     };
 
-    glm_rotate(entity->matrix, angle, (vec3){ 0.0f, 0.0f, 1.0f });
+    entity->matrix = glm::rotate(entity->matrix, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
 }
 
-void SetupCamera(vec3 position, vec3 up, float yaw, float pitch) {
-    glm_translate(currentCamera.matrix, (vec3){0.0f, 0.0f, -10.0f});
+void SetupCamera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) {
+    currentCamera.matrix = glm::translate(currentCamera.matrix, glm::vec3(0.0f, 0.0f, -10.0f));
 
-    glm_vec3_copy(position, currentCamera.position);
-    glm_vec3_copy(up, currentCamera.worldUp);
+    currentCamera.position = position;
+    currentCamera.worldUp = up;
 
     currentCamera.yaw = yaw;
     currentCamera.pitch = pitch;
 
-    glm_vec3_copy((vec3){ 0.0f, 0.0f, -1.0f }, currentCamera.front);
+    currentCamera.front = glm::vec3(0.0f, 0.0f, -1.0f);
     currentCamera.movementSpeed = 2.5f;
     currentCamera.mouseSensitivity = 0.1f;
     currentCamera.zoom = 45.0f;
@@ -555,20 +556,15 @@ void SetupCamera(vec3 position, vec3 up, float yaw, float pitch) {
 }
 
 void UpdateCameraVectors() {
-    vec3 front;
+    glm::vec3 front;
 
-    front[0] = cos(glm_rad(currentCamera.yaw)) * cos(glm_rad(currentCamera.pitch));
-    front[1] = sin(glm_rad(currentCamera.pitch));
-    front[2] = sin(glm_rad(currentCamera.yaw)) * cos(glm_rad(currentCamera.pitch));
+    front.x = std::cos(glm::radians(currentCamera.yaw)) * std::cos(glm::radians(currentCamera.pitch));
+    front.y = std::sin(glm::radians(currentCamera.pitch));
+    front.z = std::sin(glm::radians(currentCamera.yaw)) * std::cos(glm::radians(currentCamera.pitch));
 
-    glm_normalize(front);
-    glm_vec3_copy(front, currentCamera.front);
-    glm_cross(currentCamera.front, currentCamera.worldUp, currentCamera.right);
-    glm_normalize(currentCamera.right);
-    glm_cross(currentCamera.right, currentCamera.front, currentCamera.up);
-    glm_normalize(currentCamera.up);
-
-    SetViewMatrixCamera();
+    currentCamera.front = glm::normalize(currentCamera.front);
+    currentCamera.right = glm::normalize(glm::cross(currentCamera.front, currentCamera.worldUp));
+    currentCamera.up = glm::normalize(glm::cross(currentCamera.right, currentCamera.front));
 }
 
 void MouseMovementCamera(float xOffset, float yOffset, bool constraintPitch) {
@@ -592,11 +588,8 @@ void MouseMovementCamera(float xOffset, float yOffset, bool constraintPitch) {
     UpdateCameraVectors();
 }
 
-void SetViewMatrixCamera() {
-    vec3 center;
-
-    glm_vec3_mul(currentCamera.position, currentCamera.front, center);
-    glm_lookat(currentCamera.position, center, currentCamera.up, currentCamera.matrix);
+glm::mat4 GetViewMatrixCamera() {
+    return glm::lookAt(currentCamera.position, currentCamera.position + currentCamera.front, currentCamera.up);
 }
 
 #endif // COD3R_GL_IMPLEMENTATION
