@@ -36,7 +36,7 @@ int main() {
 
     int frameBufferWidth, frameBufferHeight;
 
-    SetupCamera(glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(0.0f, 1.0f, 0.0f), -1.64f, -23.71f);
+    SetupCamera(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
 
     Vector4 blue = {0.219608f, 0.619608f, 0.909804f, 1.0f};
     Vector4 pink = {0.901961f, 0.611765f, 1.0f, 1.0f};
