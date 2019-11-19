@@ -47,6 +47,8 @@ int main() {
     Entity testeMeshB = CreateRect(&blue, glm::vec3(250.0f, 150.0f, 0.0f));
     Entity testeMeshC = CreateRect(&magenta, glm::vec3(0.0f, 0.0f, 0.0f));
 
+    Entity terrain = CreateTerrain(glm::vec3(-100.0f, -100.0f, 0.0f));
+
     while (!glfwWindowShouldClose(window)) {
         glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
 
@@ -68,6 +70,7 @@ int main() {
         DrawEntity(testeMeshA);
         DrawEntity(testeMeshB);
         DrawEntity(testeMeshC);
+        DrawEntity(terrain);
 
         RenderCod3rGL();
 
