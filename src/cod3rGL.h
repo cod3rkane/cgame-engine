@@ -141,6 +141,9 @@ void UpdateCameraVectors(); // Update Camera vectors
 void MouseMovementCamera(float xOffset, float yOffset, bool constraintPitch); // Update camera based on given arguments
 glm::mat4 GetViewMatrixCamera(); // Get Camera matrix
 
+// Terrain
+Entity CreateTerrain(glm::vec3 position);
+
 #endif // COD3R_GL_H
 
 #if defined(COD3R_GL_IMPLEMENTATION)
@@ -588,6 +591,78 @@ void MouseMovementCamera(float xOffset, float yOffset, bool constraintPitch) {
 
 glm::mat4 GetViewMatrixCamera() {
     return glm::lookAt(currentCamera.position, currentCamera.position + currentCamera.front, currentCamera.up);
+}
+
+Entity CreateTerrain(glm::vec3 position) {
+    Entity entity;
+    entity.meshes = (Mesh *)malloc(sizeof(Mesh));
+
+    glm::mat4 matrix = {
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    };
+    entity.matrix = glm::translate(matrix, position);
+
+    // 10x10 grid size
+    const float SIZE = 40.0f;
+    const int VERTEX_COUNT = 4;
+    Mesh mesh;
+    mesh.vertices = (float *)malloc((VERTEX_COUNT * VERTEX_COUNT * 3) * sizeof(float));
+    mesh.colors = (float *)malloc((VERTEX_COUNT * VERTEX_COUNT * 4) * sizeof(float));
+    mesh.indices = (int *)malloc(((VERTEX_COUNT - 1) * (VERTEX_COUNT - 1) * 6) * sizeof(int));
+
+    for (int z = 0; z < VERTEX_COUNT; z++) {
+        for (int x = 0; x < VERTEX_COUNT; x++) {
+            float xVert = (float) x / ((float)VERTEX_COUNT - 1) * SIZE;
+            float zVert = (float) z / ((float)VERTEX_COUNT - 1) * SIZE;
+
+            mesh.vertices[mesh.vertexCount] = xVert;
+            mesh.vertexCount++;
+            mesh.vertices[mesh.vertexCount] = 0.0f;
+            mesh.vertexCount++;
+            mesh.vertices[mesh.vertexCount] = zVert;
+            mesh.vertexCount++;
+        }
+    }
+
+    mesh.triangleCount = mesh.vertexCount / 3;
+    const int MAX_COLORS = mesh.vertexCount + mesh.triangleCount;
+
+    for (int i = 0; i < MAX_COLORS;) {
+        mesh.colors[i++] = 0.15f;
+        mesh.colors[i++] = 0.7f;
+        mesh.colors[i++] = 0.26f;
+        mesh.colors[i++] = 1.0f; // color alpha
+    }
+
+    for (int gz = 0; gz < VERTEX_COUNT - 1; gz++) {
+        for (int gx = 0; gx < VERTEX_COUNT - 1; gx++) {
+            int topLeft = (gz * VERTEX_COUNT) + gx;
+            int topRight = topLeft +1;
+            int bottomLeft = ((gz + 1) * VERTEX_COUNT) + gx;
+            int bottomRight = bottomLeft + 1;
+
+            mesh.indices[mesh.indicesCount] = topLeft;
+            mesh.indicesCount++;
+            mesh.indices[mesh.indicesCount] = bottomLeft;
+            mesh.indicesCount++;
+            mesh.indices[mesh.indicesCount] = topRight;
+            mesh.indicesCount++;
+            mesh.indices[mesh.indicesCount] = topRight;
+            mesh.indicesCount++;
+            mesh.indices[mesh.indicesCount] = bottomLeft;
+            mesh.indicesCount++;
+            mesh.indices[mesh.indicesCount] = bottomRight;
+            mesh.indicesCount++;
+        }
+    }
+
+    entity.meshes[0] = mesh;
+    entity.meshCount = 1;
+
+    return entity;
 }
 
 #endif // COD3R_GL_IMPLEMENTATION
