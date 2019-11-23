@@ -158,12 +158,6 @@ DynamicIBuffer currentIndexBuffer = { 0 };
 
 Shader defaultShader;
 
-glm::mat4 view = {
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    0, 0, 0, 1
-};
 glm::mat4 projection = {
     1, 0, 0, 0,
     0, 1, 0, 0,
@@ -473,7 +467,6 @@ void InitCod3rGL(int windowWidth, int windowHeight) {
 
     // setup matrices
     projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -10.0f));
 }
 
 void CleanCod3rGL() {
