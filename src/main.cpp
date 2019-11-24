@@ -50,20 +50,7 @@ int main() {
     Buffer buffer = CreateBuffer(BufferRenderType::Elements);
     StoreBuffer(&buffer);
 
-    Buffer newBuffer = CreateBuffer(BufferRenderType::Elements);
-    StoreBuffer(&newBuffer);
-    // Entity terrain = CreateTerrain(glm::vec3(-100.0f, -100.0f, 0.0f));
-
-    int MAX_ITEMS = 1500;
-    Entity buffer0Entities[MAX_ITEMS];
-    Entity buffer1Entities[MAX_ITEMS];
-    Entity buffer2Entities[MAX_ITEMS];
-
-    for (int i = 0; i < MAX_ITEMS; i++) {
-      buffer0Entities[i] = CreateRect(i % 2 ? &pink : &magenta, glm::vec3(i * 10.0f, i * 2.0f, 0.0f ));
-      buffer1Entities[i] = CreateRect(i % 2 ? &pink : &magenta, glm::vec3( i * 2 * 10.0f, i * 2 * 2.0f, 0.0f ));
-      buffer2Entities[i] = CreateRect(i % 2 ? &pink : &magenta, glm::vec3( i * 3 * 10.0f, i * 3 * 2.0f, 0.0f ));
-    }
+    Entity terrain = CreateTerrain(glm::vec3(-100.0f, -100.0f, 0.0f));
 
     while (!glfwWindowShouldClose(window)) {
         glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
@@ -82,27 +69,13 @@ int main() {
         RotateEntityZ(&testeMeshA, 0.4f);
         RotateEntityZ(&testeMeshB, 0.5f);
         RotateEntityZ(&testeMeshC, 1.0f);
-        for (int i = 0; i < MAX_ITEMS; i++) {
-          RotateEntityZ(&buffer0Entities[i], 0.4f);
-          DrawEntity(buffer0Entities[i]);
-        }
 
         DrawEntity(testeMeshA);
-        BindBuffer(buffer.id);
-
-        for(int i = 0; i < MAX_ITEMS; i++) {
-          DrawEntity(buffer1Entities[i]);
-        }
         DrawEntity(testeMeshB);
-
-        BindBuffer(newBuffer.id);
-        for (int i = 0; i < MAX_ITEMS; i++) {
-          DrawEntity(buffer2Entities[i]);
-        }
         DrawEntity(testeMeshC);
 
-        // BindBuffer(newBuffer);
-        // DrawEntity(terrain);
+        BindBuffer(buffer.id);
+        DrawEntity(terrain);
 
         RenderCod3rGL();
 
