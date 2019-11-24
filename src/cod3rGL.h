@@ -96,7 +96,8 @@ typedef struct Buffer {
   DynamicFBuffer verticesBuffer;
   DynamicFBuffer colorsBuffer;
   DynamicIBuffer indexBuffer;
-  enum BufferRenderType type;
+  BufferRenderType type;
+  int id;
 } Buffer;
 
 typedef struct BufferHandler {
@@ -150,7 +151,8 @@ void RenderCod3rGL();
 void StoreDataToBufferf(DynamicFBuffer *buffer, float *data, int dataSize);
 void StoreDataToBufferi(DynamicIBuffer *buffer, int *data, int dataSize, int numTriangles);
 
-int CreateBuffer(enum BufferRenderType type);
+Buffer CreateBuffer(enum BufferRenderType type);
+void StoreBuffer(Buffer *buffer);
 void BindBuffer(int id);
 int GetCurrentBuffer();
 void CleanBuffer(int id);
@@ -425,12 +427,10 @@ void RenderCod3rGL() {
   // @TODO: 3D render
   // @TODO: 2D render
   // @TODO: Use bufferHandler
-
   glUseProgram(defaultShader.id);
 
   for (int i = 0; i < bufferHandler.size; i++) {
     glBindVertexArray(bufferHandler.buffers[i].vaoId);
-
     glBindBuffer(GL_ARRAY_BUFFER, bufferHandler.buffers[i].verticesBuffer.bufferId);
     glBufferData(
                  GL_ARRAY_BUFFER,
@@ -482,17 +482,18 @@ void RenderCod3rGL() {
 
     glDisable(GL_BLEND);
 
-    glBindVertexArray(0);
-    glUseProgram(0);
-
     CleanBuffer(i);
   }
+
+  glBindVertexArray(0);
+  glUseProgram(0);
 }
 
 void InitCod3rGL(int windowWidth, int windowHeight) {
   // Initialise buffers
-  bufferHandler.buffers = (Buffer *)malloc(MAX_BUFFERS_RENDER * sizeof(Buffer));
-  int bufferId = CreateBuffer(BufferRenderType::Elements); // Creates default Buffer
+  bufferHandler.buffers = (Buffer *)malloc(MAX_BUFFERS_RENDER * sizeof(struct Buffer));
+  Buffer buffer = CreateBuffer(BufferRenderType::Elements); // Creates default Buffer
+  StoreBuffer(&buffer);
 
   defaultShader = LoadShader("src/shaders/vertex.glsl", "src/shaders/fragment.glsl");
 
@@ -697,10 +698,13 @@ Entity CreateTerrain(glm::vec3 position) {
     return entity;
 }
 
-int CreateBuffer(enum BufferRenderType type) {
+Buffer CreateBuffer(BufferRenderType type) {
   Buffer buffer;
 
   buffer.type = type;
+  buffer.verticesBuffer = { 0 };
+  buffer.colorsBuffer = { 0 };
+  buffer.indexBuffer = { 0 };
 
   glGenVertexArrays(1, &buffer.vaoId);
   glGenBuffers(1, &buffer.verticesBuffer.bufferId);
@@ -715,10 +719,7 @@ int CreateBuffer(enum BufferRenderType type) {
     buffer.indexBuffer.data = (int *)malloc(MAX_DYNAMIC_DATA_PER_BUFFER * sizeof(int));
   }
 
-  bufferHandler.buffers[bufferHandler.size] = buffer;
-  bufferHandler.size += 1;
-
-  return bufferHandler.size;
+  return buffer;
 }
 
 void BindBuffer(int id) {
@@ -735,6 +736,12 @@ void CleanBuffer(int id) {
   bufferHandler.buffers[id].colorsBuffer.vertexCount = 0;
   bufferHandler.buffers[id].indexBuffer.vertexCount = 0;
   bufferHandler.buffers[id].indexBuffer.triangleCount = 0;
+}
+
+void StoreBuffer(Buffer *buffer) {
+  bufferHandler.buffers[bufferHandler.size] = *buffer;
+  buffer->id = bufferHandler.size;
+  bufferHandler.size += 1;
 }
 
 #endif // COD3R_GL_IMPLEMENTATION
