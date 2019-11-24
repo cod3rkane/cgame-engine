@@ -47,8 +47,8 @@ int main() {
     Entity testeMeshB = CreateRect(&blue, glm::vec3(250.0f, 150.0f, 0.0f));
     Entity testeMeshC = CreateRect(&magenta, glm::vec3(0.0f, 0.0f, 0.0f));
 
-    Buffer buffer = CreateBuffer(BufferRenderType::Elements);
-    StoreBuffer(&buffer);
+    Buffer buffer2D = CreateBuffer(BufferRenderType::Elements);
+    StoreBuffer(&buffer2D);
 
     Entity terrain = CreateTerrain(glm::vec3(-100.0f, -100.0f, 0.0f));
 
@@ -70,12 +70,14 @@ int main() {
         RotateEntityZ(&testeMeshB, 0.5f);
         RotateEntityZ(&testeMeshC, 1.0f);
 
+        // Using default buffer for 3D.
+        DrawEntity(terrain);
+
+        // 2D Render things below:
+        BindBuffer(buffer2D.id);
         DrawEntity(testeMeshA);
         DrawEntity(testeMeshB);
         DrawEntity(testeMeshC);
-
-        BindBuffer(buffer.id);
-        DrawEntity(terrain);
 
         RenderCod3rGL();
 
