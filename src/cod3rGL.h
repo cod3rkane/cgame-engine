@@ -226,7 +226,8 @@ char *LoadText(const char *fileName) {
             fseek(textFile, 0, SEEK_SET);
 
             if (size > 0) {
-                text = (char *)malloc(size * sizeof(char));
+                // size + 1 'cause we need 1 more character: Line 231
+                text = (char *)malloc((size + 1) * sizeof(char));
                 int count = fread(text, sizeof(char), size, textFile);
                 text[count] = '\0';
             }
