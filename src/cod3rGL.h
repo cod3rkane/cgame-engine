@@ -7,11 +7,11 @@
 #include <glm/ext.hpp>
 #include "external/glad.h"
 
-#define DEFAULT_ATTRIB_POSITION_NAME "vertexPosition"
-#define DEFAULT_ATTRIB_COLOR_NAME "vertexColor"
-#define MAX_SHADER_LOCATIONS 32      // Maximum number of predefined locations stored in shader struct
-#define MAX_DYNAMIC_DATA_PER_BUFFER 50000 // Maximum number of items per Dynamic Buffer
-#define MAX_BUFFERS_RENDER 5 // Maximum number of buffers (VAO, VBOs)
+constexpr auto DEFAULT_ATTRIB_POSITION_NAME = "vertexPosition";
+constexpr auto DEFAULT_ATTRIB_COLOR_NAME = "vertexColor";
+constexpr auto MAX_SHADER_LOCATIONS = 32;      // Maximum number of predefined locations stored in shader struct
+constexpr auto MAX_DYNAMIC_DATA_PER_BUFFER = 50000; // Maximum number of items per Dynamic Buffer
+constexpr auto MAX_BUFFERS_RENDER = 5; // Maximum number of buffers (VAO, VBOs)
 
 // Structs
 typedef struct Shader {
@@ -54,7 +54,7 @@ typedef struct Entity {
     glm::mat4 matrix; // Local transform matrix
 
     int meshCount; // Number of Meshes
-    Mesh *meshes; // Array of meshes
+    Mesh meshes[100]; // Array of meshes
 } Entity;
 
 typedef struct Vector2 {
@@ -92,18 +92,18 @@ typedef struct DynamicFBuffer {
 enum BufferRenderType { Arrays, Elements };
 
 typedef struct Buffer {
-  unsigned int vaoId;
-  DynamicFBuffer verticesBuffer;
-  DynamicFBuffer colorsBuffer;
-  DynamicIBuffer indexBuffer;
-  BufferRenderType type;
-  int id;
+    unsigned int vaoId;
+    DynamicFBuffer verticesBuffer;
+    DynamicFBuffer colorsBuffer;
+    DynamicIBuffer indexBuffer;
+    BufferRenderType type;
+    int id;
 } Buffer;
 
 typedef struct BufferHandler {
-  Buffer *buffers;
-  int size;
-  int currentBuffer;
+    Buffer *buffers;
+    int size;
+    int currentBuffer;
 } BufferHandler;
 
 typedef struct Camera {
@@ -156,7 +156,6 @@ void StoreBuffer(Buffer *buffer);
 void BindBuffer(int id);
 int GetCurrentBuffer();
 void CleanBuffer(int id);
-void CleanAllBuffers();
 
 // Camera Functions
 
@@ -287,10 +286,10 @@ static unsigned int CompileShader(const char *shaderStr, int type) {
 
     if (success != GL_TRUE) {
         printf("[Shader ID: %i] Failed to compile shader...\n", shader);
-        int maxLength = 0;
+        const int maxLength = 1000;
         int length;
 
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
+        //glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
 
         char log[maxLength];
         glGetShaderInfoLog(shader, maxLength, &length, log);
@@ -319,10 +318,10 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
 
     if (success == GL_FALSE) {
         printf("[Program ID: %i] Failed to link shader program...\n", program);
-        int maxLength = 0;
+        const int maxLength = 1000;
         int length;
 
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+        //glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
         char log[maxLength];
 
         glGetProgramInfoLog(program, maxLength, &length, log);
@@ -353,7 +352,7 @@ static void SetShaderDefaultLocations(Shader *shader) {
 
 Entity CreateRect(Vector4 *color, glm::vec3 position) {
     Entity entity;
-    entity.meshes = (Mesh *)malloc(sizeof(Mesh));
+    //entity.meshes = (Mesh *)malloc(sizeof(Mesh));
     // entity.matrix = (mat4 *)malloc(sizeof(mat4));
 
     Mesh mesh = { 0 };
@@ -419,96 +418,98 @@ Entity CreateRect(Vector4 *color, glm::vec3 position) {
 
 void DrawRect(Mesh mesh) {
     // @TODO: transformations
-  StoreDataToBufferf(&bufferHandler.buffers[bufferHandler.currentBuffer].verticesBuffer, mesh.vertices, 12);
-  StoreDataToBufferf(&bufferHandler.buffers[bufferHandler.currentBuffer].colorsBuffer, mesh.colors, 16);
-  StoreDataToBufferi(&bufferHandler.buffers[bufferHandler.currentBuffer].indexBuffer, mesh.indices, 6, 4);
+    StoreDataToBufferf(&bufferHandler.buffers[bufferHandler.currentBuffer].verticesBuffer, mesh.vertices, 12);
+    StoreDataToBufferf(&bufferHandler.buffers[bufferHandler.currentBuffer].colorsBuffer, mesh.colors, 16);
+    StoreDataToBufferi(&bufferHandler.buffers[bufferHandler.currentBuffer].indexBuffer, mesh.indices, 6, 4);
 }
 
 void RenderCod3rGL() {
-  // @TODO: 3D render
-  // @TODO: 2D render
-  // @TODO: Use bufferHandler
-  glUseProgram(defaultShader.id);
+    // @TODO: 3D render
+    // @TODO: 2D render
+    // @TODO: Use bufferHandler
+    glUseProgram(defaultShader.id);
 
-  for (int i = 0; i < bufferHandler.size; i++) {
-    glBindVertexArray(bufferHandler.buffers[i].vaoId);
-    glBindBuffer(GL_ARRAY_BUFFER, bufferHandler.buffers[i].verticesBuffer.bufferId);
-    glBufferData(
-                 GL_ARRAY_BUFFER,
-                 bufferHandler.buffers[i].verticesBuffer.vertexCount * sizeof(float),
-                 bufferHandler.buffers[i].verticesBuffer.data,
-                 GL_STATIC_DRAW
-                 );
+    for (int i = 0; i < bufferHandler.size; i++) {
+        glBindVertexArray(bufferHandler.buffers[i].vaoId);
+        glBindBuffer(GL_ARRAY_BUFFER, bufferHandler.buffers[i].verticesBuffer.bufferId);
+        glBufferData(
+            GL_ARRAY_BUFFER,
+            bufferHandler.buffers[i].verticesBuffer.vertexCount * sizeof(float),
+            bufferHandler.buffers[i].verticesBuffer.data,
+            GL_STATIC_DRAW
+            );
 
-    glVertexAttribPointer(LOC_VERTEX_POSITION, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-    glEnableVertexAttribArray(LOC_VERTEX_POSITION);
+        glVertexAttribPointer(LOC_VERTEX_POSITION, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+        glEnableVertexAttribArray(LOC_VERTEX_POSITION);
 
-    glBindBuffer(GL_ARRAY_BUFFER, bufferHandler.buffers[i].colorsBuffer.bufferId);
-    glBufferData(
-                 GL_ARRAY_BUFFER,
-                 bufferHandler.buffers[i].colorsBuffer.vertexCount * sizeof(float),
-                 bufferHandler.buffers[i].colorsBuffer.data,
-                 GL_STATIC_DRAW
-                 );
+        glBindBuffer(GL_ARRAY_BUFFER, bufferHandler.buffers[i].colorsBuffer.bufferId);
+        glBufferData(
+            GL_ARRAY_BUFFER,
+            bufferHandler.buffers[i].colorsBuffer.vertexCount * sizeof(float),
+            bufferHandler.buffers[i].colorsBuffer.data,
+            GL_STATIC_DRAW
+            );
 
-    glVertexAttribPointer(LOC_VERTEX_COLOR, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-    glEnableVertexAttribArray(LOC_VERTEX_COLOR);
+        glVertexAttribPointer(LOC_VERTEX_COLOR, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+        glEnableVertexAttribArray(LOC_VERTEX_COLOR);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferHandler.buffers[i].indexBuffer.bufferId);
-    glBufferData(
-                 GL_ELEMENT_ARRAY_BUFFER,
-                 bufferHandler.buffers[i].indexBuffer.vertexCount * sizeof(unsigned int),
-                 bufferHandler.buffers[i].indexBuffer.data,
-                 GL_STATIC_DRAW
-                 );
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferHandler.buffers[i].indexBuffer.bufferId);
+        glBufferData(
+            GL_ELEMENT_ARRAY_BUFFER,
+            bufferHandler.buffers[i].indexBuffer.vertexCount * sizeof(unsigned int),
+            bufferHandler.buffers[i].indexBuffer.data,
+            GL_STATIC_DRAW
+            );
 
-    if (defaultShader.locs[LOC_MATRIX_PROJECTION] != -1) {
-        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_PROJECTION], 1, GL_FALSE, glm::value_ptr(projection));
+        if (defaultShader.locs[LOC_MATRIX_PROJECTION] != -1) {
+            glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_PROJECTION], 1, GL_FALSE, glm::value_ptr(projection));
+        }
+
+        if (defaultShader.locs[LOC_MATRIX_VIEW] != -1) {
+            glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_VIEW], 1, GL_FALSE, glm::value_ptr(GetViewMatrixCamera()));
+        }
+
+        if (defaultShader.locs[LOC_MATRIX_MODEL] != -1) {
+            glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_MODEL], 1, GL_FALSE, glm::value_ptr(model));
+        }
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferHandler.buffers[i].indexBuffer.bufferId);
+
+        glDrawElements(GL_TRIANGLES, bufferHandler.buffers[i].indexBuffer.vertexCount, GL_UNSIGNED_INT, 0);
+
+        glDisable(GL_BLEND);
+
+        CleanBuffer(i);
     }
 
-    if (defaultShader.locs[LOC_MATRIX_VIEW] != -1) {
-        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_VIEW], 1, GL_FALSE, glm::value_ptr(GetViewMatrixCamera()));
-    }
-
-    if (defaultShader.locs[LOC_MATRIX_MODEL] != -1) {
-        glUniformMatrix4fv(defaultShader.locs[LOC_MATRIX_MODEL], 1, GL_FALSE, glm::value_ptr(model));
-    }
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferHandler.buffers[i].indexBuffer.bufferId);
-
-    glDrawElements(GL_TRIANGLES, bufferHandler.buffers[i].indexBuffer.vertexCount, GL_UNSIGNED_INT, 0);
-
-    glDisable(GL_BLEND);
-
-    CleanBuffer(i);
-  }
-
-  glBindVertexArray(0);
-  glUseProgram(0);
+    glBindVertexArray(0);
+    glUseProgram(0);
 }
 
 void InitCod3rGL(int windowWidth, int windowHeight) {
-  // Initialise buffers
-  bufferHandler.buffers = (Buffer *)malloc(MAX_BUFFERS_RENDER * sizeof(struct Buffer));
-  Buffer buffer = CreateBuffer(BufferRenderType::Elements); // Creates default Buffer
-  StoreBuffer(&buffer);
+    // Initialise buffers
+    bufferHandler.buffers = (Buffer *)malloc(MAX_BUFFERS_RENDER * sizeof(struct Buffer));
+    Buffer buffer = CreateBuffer(BufferRenderType::Elements); // Creates default Buffer
+    StoreBuffer(&buffer);
 
-  defaultShader = LoadShader("src/shaders/vertex.glsl", "src/shaders/fragment.glsl");
+    defaultShader = LoadShader("C:/Users/J-lop/Projects/cod3r/cgame-engine/src/shaders/vertex.glsl", "C:/Users/J-lop/Projects/cod3r/cgame-engine/src/shaders/fragment.glsl");
 
-  // setup matrices
-  projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
+    // setup matrices
+    projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
 }
 
 void CleanCod3rGL() {
-  for (int i = 0; i < bufferHandler.size; i++) {
-    glDeleteVertexArrays(1, &bufferHandler.buffers[i].vaoId);
-    glDeleteBuffers(1, &bufferHandler.buffers[i].verticesBuffer.bufferId);
-    glDeleteBuffers(1, &bufferHandler.buffers[i].colorsBuffer.bufferId);
-    glDeleteBuffers(1, &bufferHandler.buffers[i].indexBuffer.bufferId);
-  }
+    for (int i = 0; i < bufferHandler.size; i++) {
+        glDeleteVertexArrays(1, &bufferHandler.buffers[i].vaoId);
+        glDeleteBuffers(1, &bufferHandler.buffers[i].verticesBuffer.bufferId);
+        glDeleteBuffers(1, &bufferHandler.buffers[i].colorsBuffer.bufferId);
+        glDeleteBuffers(1, &bufferHandler.buffers[i].indexBuffer.bufferId);
+    }
+
+    free(bufferHandler.buffers);
 }
 
 void StoreDataToBufferf(DynamicFBuffer *buffer, float *data, int dataSize) {
@@ -531,7 +532,7 @@ void StoreDataToBufferi(DynamicIBuffer *buffer, int *data, int dataSize, int num
 void DrawEntity(Entity entity) {
     for (int i = 0; i < entity.meshCount; i++) {
         // apply matrix to vertex
-        float formattedVertex[entity.meshes[i].vertexCount];
+        float* formattedVertex = new float[entity.meshes[i].vertexCount];
         glm::vec4 newPos = { 0.0f, 0.0f, 0.0f, 0.0f };
         for (int vertIndex = 0; vertIndex < entity.meshes[i].vertexCount;) {
             // glm_mat4_mulv(entity.matrix, (vec4){entity.meshes[i].vertices[vertIndex], entity.meshes[i].vertices[vertIndex + 1], entity.meshes[i].vertices[vertIndex + 2], 0.01f}, newPos);
@@ -561,6 +562,8 @@ void DrawEntity(Entity entity) {
                            entity.meshes[i].indicesCount,
                            entity.meshes[i].triangleCount
                            );
+
+        free(formattedVertex);
     }
 }
 
@@ -629,7 +632,7 @@ glm::mat4 GetViewMatrixCamera() {
 
 Entity CreateTerrain(glm::vec3 position) {
     Entity entity;
-    entity.meshes = (Mesh *)malloc(sizeof(Mesh));
+    //entity.meshes = (Mesh *)malloc(sizeof(Mesh));
 
     glm::mat4 matrix = {
         1, 0, 0, 0,
@@ -642,7 +645,7 @@ Entity CreateTerrain(glm::vec3 position) {
     // 10x10 grid size
     const float SIZE = 40.0f;
     const int VERTEX_COUNT = 4;
-    Mesh mesh;
+    Mesh mesh = {};
     mesh.vertices = (float *)malloc((VERTEX_COUNT * VERTEX_COUNT * 3) * sizeof(float));
     mesh.colors = (float *)malloc((VERTEX_COUNT * VERTEX_COUNT * 4) * sizeof(float));
     mesh.indices = (int *)malloc(((VERTEX_COUNT - 1) * (VERTEX_COUNT - 1) * 6) * sizeof(int));
@@ -700,49 +703,49 @@ Entity CreateTerrain(glm::vec3 position) {
 }
 
 Buffer CreateBuffer(BufferRenderType type) {
-  Buffer buffer;
+    Buffer buffer;
 
-  buffer.type = type;
-  buffer.verticesBuffer = { 0 };
-  buffer.colorsBuffer = { 0 };
-  buffer.indexBuffer = { 0 };
+    buffer.type = type;
+    buffer.verticesBuffer = { 0 };
+    buffer.colorsBuffer = { 0 };
+    buffer.indexBuffer = { 0 };
 
-  glGenVertexArrays(1, &buffer.vaoId);
-  glGenBuffers(1, &buffer.verticesBuffer.bufferId);
-  glGenBuffers(1, &buffer.colorsBuffer.bufferId);
-  glGenBuffers(1, &buffer.indexBuffer.bufferId);
+    glGenVertexArrays(1, &buffer.vaoId);
+    glGenBuffers(1, &buffer.verticesBuffer.bufferId);
+    glGenBuffers(1, &buffer.colorsBuffer.bufferId);
+    glGenBuffers(1, &buffer.indexBuffer.bufferId);
 
-  // Allocate memory for Dynamic Buffers
-  buffer.verticesBuffer.data = (float *)malloc(MAX_DYNAMIC_DATA_PER_BUFFER * sizeof(float));
-  buffer.colorsBuffer.data = (float *)malloc(MAX_DYNAMIC_DATA_PER_BUFFER * sizeof(float));
+    // Allocate memory for Dynamic Buffers
+    buffer.verticesBuffer.data = (float *)malloc(MAX_DYNAMIC_DATA_PER_BUFFER * sizeof(float));
+    buffer.colorsBuffer.data = (float *)malloc(MAX_DYNAMIC_DATA_PER_BUFFER * sizeof(float));
 
-  if (type == BufferRenderType::Elements) {
-    buffer.indexBuffer.data = (int *)malloc(MAX_DYNAMIC_DATA_PER_BUFFER * sizeof(int));
-  }
+    if (type == BufferRenderType::Elements) {
+        buffer.indexBuffer.data = (int *)malloc(MAX_DYNAMIC_DATA_PER_BUFFER * sizeof(int));
+    }
 
-  return buffer;
+    return buffer;
 }
 
 void BindBuffer(int id) {
-  bufferHandler.currentBuffer = id;
+    bufferHandler.currentBuffer = id;
 }
 
 
 int GetCurrentBuffer() {
-  return bufferHandler.currentBuffer;
+    return bufferHandler.currentBuffer;
 }
 
 void CleanBuffer(int id) {
-  bufferHandler.buffers[id].verticesBuffer.vertexCount = 0;
-  bufferHandler.buffers[id].colorsBuffer.vertexCount = 0;
-  bufferHandler.buffers[id].indexBuffer.vertexCount = 0;
-  bufferHandler.buffers[id].indexBuffer.triangleCount = 0;
+    bufferHandler.buffers[id].verticesBuffer.vertexCount = 0;
+    bufferHandler.buffers[id].colorsBuffer.vertexCount = 0;
+    bufferHandler.buffers[id].indexBuffer.vertexCount = 0;
+    bufferHandler.buffers[id].indexBuffer.triangleCount = 0;
 }
 
 void StoreBuffer(Buffer *buffer) {
-  bufferHandler.buffers[bufferHandler.size] = *buffer;
-  buffer->id = bufferHandler.size;
-  bufferHandler.size += 1;
+    bufferHandler.buffers[bufferHandler.size] = *buffer;
+    buffer->id = bufferHandler.size;
+    bufferHandler.size += 1;
 }
 
 #endif // COD3R_GL_IMPLEMENTATION

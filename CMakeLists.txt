@@ -3,9 +3,17 @@ project(cgame_engine)
 
 set(CMAKE_CXX_STANDARD 11)
 
-find_package(PkgConfig REQUIRED)
+#find_package(PkgConfig REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(glfw3 3.3 REQUIRED)
+#find_package(glfw3 3.3 REQUIRED)
+
+include_directories("build/glfw-3.3/include")
+
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(build/glfw-3.3)
 
 add_executable(
   cgame_engine

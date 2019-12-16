@@ -75,6 +75,7 @@ int main() {
 
         // 2D Render things below:
         BindBuffer(buffer2D.id);
+
         DrawEntity(testeMeshA);
         DrawEntity(testeMeshB);
         DrawEntity(testeMeshC);
