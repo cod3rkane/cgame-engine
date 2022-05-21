@@ -23,4 +23,4 @@ include_directories(src/external/include)
 include_directories(${OPENGL_INCLUDE_DIR} ${OPENGL_INCLUDE_DIRS})
 
 target_include_directories(cgame_engine PUBLIC ${OPENGL_INCLUDE_DIR})
-target_link_libraries(cgame_engine PUBLIC glfw ${OPENGL_LIBRARIES} ${OPENGL_gl_LIBRARY} ${CMAKE_DL_LIBS})
+target_link_libraries(cgame_engine PUBLIC glfw ${OPENGL_LIBRARIES} ${OPENGL_gl_LIBRARY} ${CMAKE_DL_LIBS} -lm -lstdc++)

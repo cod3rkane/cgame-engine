@@ -1,6 +1,8 @@
 #include <iostream>
+#include <ostream>
 #include <stdio.h>
 #include "external/glad.h"
+#include "glm/fwd.hpp"
 #include <GLFW/glfw3.h>
 
 #define COD3R_GL_IMPLEMENTATION
@@ -43,14 +45,10 @@ int main() {
     Vector4 purple = {0.721569f, 0.556863f, 0.909804f, 1.0f};
     Vector4 magenta = {0.72549f, 0.658824f, 1.0f, 1.0f};
 
-    Entity testeMeshA = CreateRect(&purple, glm::vec3(0.0f, 0.0f, 0.0f));
-    Entity testeMeshB = CreateRect(&blue, glm::vec3(250.0f, 150.0f, 0.0f));
-    Entity testeMeshC = CreateRect(&magenta, glm::vec3(0.0f, 0.0f, 0.0f));
-
     Buffer buffer2D = CreateBuffer(BufferRenderType::Elements);
-    StoreBuffer(&buffer2D);
 
-    Entity terrain = CreateTerrain(glm::vec3(-100.0f, -100.0f, 0.0f));
+    Entity test = CreateRect(&purple, glm::vec3(-10.0f, 100.0f, 0.0f));
+    Entity liz = CreateRect(&magenta, glm::vec3(-130.0f, 100.0f, 0.0f));
 
     while (!glfwWindowShouldClose(window)) {
         glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
@@ -66,18 +64,11 @@ int main() {
 
         UserInputs(window, 0.05f, &currentCamera);
 
-        RotateEntityZ(&testeMeshA, 0.4f);
-        RotateEntityZ(&testeMeshB, 0.5f);
-        RotateEntityZ(&testeMeshC, 1.0f);
+        RotateEntityZ(&liz, 1.0f);
 
-        // Using default buffer for 3D.
-        DrawEntity(terrain);
-
-        // 2D Render things below:
-        BindBuffer(buffer2D.id);
-        DrawEntity(testeMeshA);
-        DrawEntity(testeMeshB);
-        DrawEntity(testeMeshC);
+        //BindBuffer(buffer2D.id);
+        DrawEntity(test);
+        DrawEntity(liz);
 
         RenderCod3rGL();
 
